@@ -29,19 +29,20 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    # Use SQLite connection string
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'postgresql://localhost/banktools_dev'
+        'sqlite:///' + os.path.join(basedir, 'banktools_dev.db')
 
 
 class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
-        'postgresql://localhost/banktools_test'
+        'sqlite:///' + os.path.join(basedir, 'banktools_test.db')
 
 
 class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'postgresql://localhost/banktools_prod'
+        'sqlite:///' + os.path.join(basedir, 'banktools_prod.db')
 
 
 config = {
