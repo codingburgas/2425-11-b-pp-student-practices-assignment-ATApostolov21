@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import type { FormEvent } from 'react'
-import { auth } from '../api'
+import { useState, useEffect, type FormEvent } from 'react'
 import type { User } from '../types'
+import { auth } from '../api'
+import Logo from './Logo'
 
 interface RegisterFormProps {
   onSuccess: (user: User) => void
@@ -89,16 +89,9 @@ export default function RegisterForm({ onNavigateToLogin, onBackToLanding }: Reg
       <div className="relative z-10 sm:mx-auto sm:w-full sm:max-w-sm">
         <div className="text-center">
           <div className="flex justify-center mb-6">
-            <div className="relative">
-              <div className="h-16 w-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center transform rotate-3 hover:rotate-6 transition-all duration-300 shadow-2xl">
-                <svg className="h-8 w-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" />
-                </svg>
-              </div>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-ping"></div>
-            </div>
+            <Logo size="large" />
           </div>
-          <h2 className="text-4xl font-bold bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent mb-2">
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-white via-purple-200 to-cyan-200 bg-clip-text text-transparent mb-2">
             BankTools_AI
           </h2>
           <h3 className="text-2xl font-bold text-white mb-4">

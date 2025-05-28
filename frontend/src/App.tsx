@@ -9,6 +9,8 @@ import EmployeeDashboard from './components/EmployeeDashboard'
 import LoanRequestForm from './components/LoanRequestForm'
 import ChurnAnalysisUpload from './components/ChurnAnalysisUpload'
 import OnboardingFlow from './components/OnboardingFlow'
+import ProfilePage from './components/ProfilePage'
+import SettingsPage from './components/SettingsPage'
 import { auth } from './api'
 import type { User } from './types'
 
@@ -52,6 +54,12 @@ function App() {
     setShowOnboarding(false)
   }
 
+  const handleUpdateProfile = (updatedUser: Partial<User>) => {
+    if (user) {
+      setUser({ ...user, ...updatedUser })
+    }
+  }
+
   // Show onboarding overlay if user is logged in and onboarding should be shown
   if (user && showOnboarding) {
     return (
@@ -73,6 +81,8 @@ function App() {
                 />
                 <Route path="/loan-request" element={<LoanRequestForm />} />
                 <Route path="/churn-analysis" element={<ChurnAnalysisUpload />} />
+                <Route path="/profile" element={<ProfilePage user={user} onUpdateProfile={handleUpdateProfile} />} />
+                <Route path="/settings" element={<SettingsPage user={user} />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Layout>
@@ -118,6 +128,8 @@ function App() {
             />
             <Route path="/loan-request" element={<LoanRequestForm />} />
             <Route path="/churn-analysis" element={<ChurnAnalysisUpload />} />
+            <Route path="/profile" element={<ProfilePage user={user} onUpdateProfile={handleUpdateProfile} />} />
+            <Route path="/settings" element={<SettingsPage user={user} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Layout>
