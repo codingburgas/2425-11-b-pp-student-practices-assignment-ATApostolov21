@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Prevent white background on overscroll */
+html {
+  background-color: #000000;
+  background: linear-gradient(135deg, #0f172a 0%, #000000 50%, #0f172a 100%);
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #000000;
+  background: linear-gradient(135deg, #0f172a 0%, #000000 50%, #0f172a 100%);
+  background-attachment: fixed;
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Ensure all root elements have dark background */
+#root {
+  min-height: 100vh;
+  background-color: #000000;
+  overscroll-behavior: none;
+}
+
+/* Additional mobile overscroll fixes */
+@supports (-webkit-overflow-scrolling: touch) {
+  html, body {
+    -webkit-overflow-scrolling: touch;
+    background-color: #000000 !important;
+  }
+}
