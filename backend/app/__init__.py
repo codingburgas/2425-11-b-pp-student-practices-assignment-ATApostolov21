@@ -18,6 +18,13 @@ def create_app(config_class=Config):
     # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
+    
+    # Configure LoginManager
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message = 'Please log in to access this page.'
+    login_manager.login_message_category = 'info'
+    login_manager.session_protection = 'strong'
+    
     mail.init_app(app)
     migrate.init_app(app, db)
     CORS(app, 
@@ -36,12 +43,22 @@ def create_app(config_class=Config):
     from app.admin import bp as admin_bp
     app.register_blueprint(admin_bp, url_prefix='/admin')
     
-    from app.ai_models import bp as ai_models_bp
-    app.register_blueprint(ai_models_bp, url_prefix='/ai_models')
+    # Register AI models blueprint
+    from app.ai_models import create_blueprint
+    ai_models_bp = create_blueprint()
+    app.register_blueprint(ai_models_bp, url_prefix='/api')
     
     @login_manager.user_loader
     def load_user(id):
         from app.models import User
         return User.query.get(int(id))
+    
+    # Load AI models after app context is available
+    with app.app_context():
+        try:
+            from app.ai_models.routes import load_models
+            load_models()
+        except Exception as e:
+            print(f"Warning: Could not load AI models: {str(e)}")
     
     return app 
