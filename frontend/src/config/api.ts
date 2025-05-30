@@ -11,6 +11,8 @@ export const API_CONFIG = {
     },
     ADMIN: {
       CHURN_UPLOAD: '/admin/churn-upload',
+      CHURN_ANALYSES: '/admin/churn-analyses',
+      CHURN_ANALYSIS: '/admin/churn-analysis',
     },
   },
   HEADERS: {

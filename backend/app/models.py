@@ -46,6 +46,7 @@ class LoanRequest(db.Model):
 class ChurnAnalysis(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     employee_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
     file_path = db.Column(db.String(255), nullable=False)
     results = db.Column(db.JSON)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

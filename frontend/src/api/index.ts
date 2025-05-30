@@ -34,13 +34,20 @@ export const banking = {
   submitLoanRequest: (data: LoanRequest) =>
     api.post(API_CONFIG.ENDPOINTS.USER.LOAN_REQUEST, data),
   
-  uploadChurnAnalysis: (file: File) => {
+  uploadChurnAnalysis: (file: File, analysisName: string) => {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('analysis_name', analysisName);
     return api.post(API_CONFIG.ENDPOINTS.ADMIN.CHURN_UPLOAD, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
   },
+
+  getChurnAnalyses: () =>
+    api.get(API_CONFIG.ENDPOINTS.ADMIN.CHURN_ANALYSES),
+
+  getChurnAnalysis: (id: number) =>
+    api.get(`${API_CONFIG.ENDPOINTS.ADMIN.CHURN_ANALYSIS}/${id}`),
 }; 

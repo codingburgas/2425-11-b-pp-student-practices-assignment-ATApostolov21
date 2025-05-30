@@ -81,6 +81,7 @@ function App() {
                 />
                 <Route path="/loan-request" element={<LoanRequestForm />} />
                 <Route path="/churn-analysis" element={<ChurnAnalysisUpload />} />
+                <Route path="/churn-analysis/:id" element={<ChurnAnalysisUpload />} />
                 <Route path="/profile" element={<ProfilePage user={user} onUpdateProfile={handleUpdateProfile} />} />
                 <Route path="/settings" element={<SettingsPage user={user} />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
@@ -128,6 +129,7 @@ function App() {
             />
             <Route path="/loan-request" element={<LoanRequestForm />} />
             <Route path="/churn-analysis" element={<ChurnAnalysisUpload />} />
+            <Route path="/churn-analysis/:id" element={<ChurnAnalysisUpload />} />
             <Route path="/profile" element={<ProfilePage user={user} onUpdateProfile={handleUpdateProfile} />} />
             <Route path="/settings" element={<SettingsPage user={user} />} />
             <Route path="*" element={<Navigate to="/" replace />} />

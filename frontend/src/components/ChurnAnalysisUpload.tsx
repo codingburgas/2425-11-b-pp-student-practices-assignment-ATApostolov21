@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useParams } from 'react-router-dom'
 import { banking } from '../api'
 
 interface Customer {
@@ -58,7 +59,9 @@ interface ChurnAnalysisResult {
 }
 
 export default function ChurnAnalysisUpload() {
+  const { id } = useParams<{ id: string }>()
   const [file, setFile] = useState<File | null>(null)
+  const [analysisName, setAnalysisName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<ChurnAnalysisResult | null>(null)
@@ -72,6 +75,28 @@ export default function ChurnAnalysisUpload() {
     highRisk: 0
   })
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [isViewingExisting, setIsViewingExisting] = useState(false)
+
+  // Load existing analysis if ID is provided
+  useEffect(() => {
+    if (id) {
+      const loadExistingAnalysis = async () => {
+        try {
+          setIsLoading(true)
+          const response = await banking.getChurnAnalysis(parseInt(id))
+          setResult(response.data.results)
+          setAnalysisName(`Analysis from ${new Date(response.data.created_at).toLocaleDateString()}`)
+          setIsViewingExisting(true)
+        } catch (error) {
+          console.error('Failed to load analysis:', error)
+          setError('Failed to load analysis')
+        } finally {
+          setIsLoading(false)
+        }
+      }
+      loadExistingAnalysis()
+    }
+  }, [id])
 
   // Mouse tracking for parallax effects
   useEffect(() => {
@@ -146,11 +171,16 @@ export default function ChurnAnalysisUpload() {
       return
     }
 
+    if (!analysisName.trim()) {
+      setError('Please enter an analysis name')
+      return
+    }
+
     setIsLoading(true)
     setError('')
 
     try {
-      const response = await banking.uploadChurnAnalysis(file)
+      const response = await banking.uploadChurnAnalysis(file, analysisName.trim())
       setResult(response.data.results)
     } catch (err: any) {
       console.error('Upload error:', err)
@@ -306,9 +336,29 @@ export default function ChurnAnalysisUpload() {
                   )}
                 </div>
 
+                {/* Analysis Name Input */}
+                <div className="mt-6">
+                  <label htmlFor="analysis-name" className="block text-white font-medium mb-3 text-lg">
+                    Analysis Name
+                  </label>
+                  <input
+                    type="text"
+                    id="analysis-name"
+                    value={analysisName}
+                    onChange={(e) => setAnalysisName(e.target.value)}
+                    placeholder="Enter a name for this analysis (e.g., Q4 Customer Churn Review)"
+                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all duration-300"
+                    maxLength={100}
+                  />
+                  <div className="flex justify-between items-center mt-2">
+                    <p className="text-gray-500 text-sm">Give your analysis a descriptive name</p>
+                    <p className="text-gray-500 text-sm">{analysisName.length}/100</p>
+                  </div>
+                </div>
+
                 <button
                   onClick={handleUpload}
-                  disabled={!file || isLoading}
+                  disabled={!file || !analysisName.trim() || isLoading}
                   className="w-full mt-8 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white py-4 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-3 text-lg hover:scale-[1.02] transform shadow-lg"
                 >
                   {isLoading ? (

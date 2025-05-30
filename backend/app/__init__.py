@@ -20,10 +20,19 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     
     # Configure LoginManager
-    login_manager.login_view = 'auth.login'
+    login_manager.login_view = None  # Disable automatic redirects for API
     login_manager.login_message = 'Please log in to access this page.'
     login_manager.login_message_category = 'info'
     login_manager.session_protection = 'strong'
+    
+    # Custom unauthorized handler for API responses
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        from flask import request, jsonify
+        if request.path.startswith('/api') or request.path.startswith('/admin') or request.path.startswith('/user'):
+            return jsonify({'error': 'Authentication required', 'message': 'Please log in to access this resource'}), 401
+        else:
+            return jsonify({'error': 'Authentication required'}), 401
     
     mail.init_app(app)
     migrate.init_app(app, db)

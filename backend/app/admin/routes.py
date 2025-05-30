@@ -19,9 +19,16 @@ def upload_churn_analysis():
     
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
+    
+    if 'analysis_name' not in request.form:
+        return jsonify({'error': 'Analysis name is required'}), 400
         
     file = request.files['file']
+    analysis_name = request.form['analysis_name'].strip()
     
+    if not analysis_name:
+        return jsonify({'error': 'Analysis name cannot be empty'}), 400
+        
     if file.filename == '':
         return jsonify({'error': 'No file selected'}), 400
         
@@ -254,14 +261,15 @@ def upload_churn_analysis():
         }
         
         # Save analysis to database
-    analysis = ChurnAnalysis(
-        employee_id=current_user.id,
-        file_path=filepath,
+        analysis = ChurnAnalysis(
+            employee_id=current_user.id,
+            name=analysis_name,
+            file_path=filepath,
             results=analysis_results
-    )
-    
-    db.session.add(analysis)
-    db.session.commit()
+        )
+        
+        db.session.add(analysis)
+        db.session.commit()
         
         # Create success message with processing details
         success_message = 'Real AI churn analysis completed successfully'
@@ -317,8 +325,10 @@ def list_churn_analyses():
     return jsonify({
         'analyses': [{
             'id': analysis.id,
+            'name': analysis.name,
             'created_at': analysis.created_at.isoformat(),
             'total_customers': analysis.results.get('summary', {}).get('total_customers', 0),
-            'avg_churn_risk': analysis.results.get('summary', {}).get('avg_churn_risk', 0)
+            'avg_churn_risk': analysis.results.get('summary', {}).get('avg_churn_risk', 0),
+            'high_risk_customers': analysis.results.get('summary', {}).get('high_risk_customers', 0)
         } for analysis in analyses]
     }) 

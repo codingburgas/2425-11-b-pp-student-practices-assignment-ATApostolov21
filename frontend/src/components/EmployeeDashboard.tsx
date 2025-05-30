@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import type { User } from '../types'
+import { banking } from '../api'
+import type { User, ChurnAnalysisListItem } from '../types'
 
 interface EmployeeDashboardProps {
   user: User
@@ -8,49 +9,85 @@ interface EmployeeDashboardProps {
 
 export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
   const [isVisible, setIsVisible] = useState(false)
+  const [recentAnalyses, setRecentAnalyses] = useState<ChurnAnalysisListItem[]>([])
   const [animatedStats, setAnimatedStats] = useState({
     activeCustomers: 0,
     loansProcessed: 0,
     churnRate: 0,
     aiAccuracy: 0
   })
+  const [realStats, setRealStats] = useState({
+    totalCustomers: 0,
+    avgChurnRate: 0,
+    highRiskCustomers: 0,
+    aiAccuracy: 99.7,
+    loansProcessed: 486
+  })
 
   useEffect(() => {
     setIsVisible(true)
     
-    // Animate analytics stats
-    const animateStats = () => {
-      const duration = 2000
-      const intervals = 60
-      const stepTime = duration / intervals
-      
-      let currentStep = 0
-      const timer = setInterval(() => {
-        currentStep++
-        const progress = currentStep / intervals
+    // Fetch recent churn analyses
+    const fetchRecentAnalyses = async () => {
+      try {
+        const response = await banking.getChurnAnalyses()
+        const analyses = response.data.analyses.slice(0, 3)
+        setRecentAnalyses(analyses)
         
-        setAnimatedStats({
-          activeCustomers: Math.floor(2847 * progress),
-          loansProcessed: Math.floor(486 * progress),
-          churnRate: Math.floor(32 * progress) / 10, // 3.2%
-          aiAccuracy: Math.floor(997 * progress) / 10 // 99.7%
-        })
-        
-        if (currentStep >= intervals) {
-          clearInterval(timer)
-          setAnimatedStats({
-            activeCustomers: 2847,
-            loansProcessed: 486,
-            churnRate: 3.2,
-            aiAccuracy: 99.7
+        // Calculate real stats from most recent analysis
+        if (analyses.length > 0) {
+          const latest = analyses[0]
+          setRealStats({
+            totalCustomers: latest.total_customers,
+            avgChurnRate: latest.avg_churn_risk * 100,
+            highRiskCustomers: latest.high_risk_customers,
+            aiAccuracy: 99.7,
+            loansProcessed: Math.floor(latest.total_customers * 0.15) // Estimate 15% loan applications
           })
         }
-      }, stepTime)
+      } catch (error) {
+        console.error('Failed to fetch recent analyses:', error)
+      }
     }
+
+    fetchRecentAnalyses()
     
-    const statsTimer = setTimeout(animateStats, 500)
-    return () => clearTimeout(statsTimer)
-  }, [])
+    // Animate analytics stats with real data
+    const animateStats = () => {
+      const duration = 2000
+      const steps = 60
+      const interval = duration / steps
+
+      let step = 0
+      const timer = setInterval(() => {
+        step++
+        const progress = step / steps
+
+        setAnimatedStats({
+          activeCustomers: Math.floor(realStats.totalCustomers * progress),
+          loansProcessed: Math.floor(realStats.highRiskCustomers * progress),
+          churnRate: Math.floor(realStats.avgChurnRate * progress),
+          aiAccuracy: Math.floor(realStats.aiAccuracy * progress)
+        })
+
+        if (step >= steps) {
+          clearInterval(timer)
+          setAnimatedStats({
+            activeCustomers: realStats.totalCustomers,
+            loansProcessed: realStats.highRiskCustomers,
+            churnRate: Math.floor(realStats.avgChurnRate),
+            aiAccuracy: Math.floor(realStats.aiAccuracy)
+          })
+        }
+      }, interval)
+
+      return () => clearInterval(timer)
+    }
+
+    // Delay animation start to sync with visibility
+    const animationTimeout = setTimeout(animateStats, 500)
+    return () => clearTimeout(animationTimeout)
+  }, [realStats.totalCustomers, realStats.avgChurnRate])
 
   const analyticsTools = [
     {
@@ -91,39 +128,6 @@ export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
     }
   ]
 
-  const recentActivity = [
-    {
-      type: 'success',
-      message: 'Churn analysis completed for 150 customers',
-      time: '2 hours ago',
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      )
-    },
-    {
-      type: 'info',
-      message: 'Loan approval model updated',
-      time: '5 hours ago',
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      )
-    },
-    {
-      type: 'warning',
-      message: 'Monthly analytics report generated',
-      time: '1 day ago',
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 00-2 2z" />
-        </svg>
-      )
-    }
-  ]
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
       {/* Animated background elements */}
@@ -155,66 +159,80 @@ export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Analytics Overview */}
         <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300">
+          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300 hover:border-blue-500/30">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              <span className="text-blue-400 text-sm font-medium">+12% this month</span>
+              <span className="text-blue-400 text-sm font-medium">
+                {recentAnalyses.length > 0 ? 'analyzed customers' : '+12% this month'}
+              </span>
             </div>
             <div className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-1">
-              {animatedStats.activeCustomers.toLocaleString()}
+              {animatedStats.activeCustomers.toLocaleString() || '2,847'}
             </div>
-            <div className="text-gray-400 text-sm">Active Customers</div>
+            <div className="text-gray-400 text-sm">
+              {recentAnalyses.length > 0 ? 'Total Customers in Latest Analysis' : 'Active Customers'}
+            </div>
           </div>
 
-          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300">
+          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300 hover:border-red-500/30">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-              <span className="text-green-400 text-sm font-medium">+8% this week</span>
-            </div>
-            <div className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent mb-1">
-              {animatedStats.loansProcessed}
-            </div>
-            <div className="text-gray-400 text-sm">Loans Processed</div>
-          </div>
-
-          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
+              <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
               </div>
-              <span className="text-yellow-400 text-sm font-medium">-0.5% improvement</span>
+              <span className="text-red-400 text-sm font-medium">
+                {recentAnalyses.length > 0 ? 'high risk customers' : 'risk alerts'}
+              </span>
+            </div>
+            <div className="text-3xl font-bold bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent mb-1">
+              {animatedStats.loansProcessed}
+            </div>
+            <div className="text-gray-400 text-sm">
+              {recentAnalyses.length > 0 ? 'High Risk Customers Identified' : 'Loans Processed'}
+            </div>
+          </div>
+
+          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300 hover:border-yellow-500/30">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                </svg>
+              </div>
+              <span className="text-yellow-400 text-sm font-medium">
+                {recentAnalyses.length > 0 ? 'average churn risk' : '-0.5% improvement'}
+              </span>
             </div>
             <div className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-1">
               {animatedStats.churnRate}%
             </div>
-            <div className="text-gray-400 text-sm">Churn Risk</div>
+            <div className="text-gray-400 text-sm">Average Churn Risk Score</div>
           </div>
 
-          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300">
+          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300 hover:border-purple-500/30">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <span className="text-purple-400 text-sm font-medium">Model performance</span>
+              <span className="text-purple-400 text-sm font-medium">
+                {recentAnalyses.length > 0 ? 'analysis insights' : 'model performance'}
+              </span>
             </div>
             <div className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-1">
-              {animatedStats.aiAccuracy}%
+              {recentAnalyses.length > 0 ? recentAnalyses.length : animatedStats.aiAccuracy + '%'}
             </div>
-            <div className="text-gray-400 text-sm">AI Accuracy</div>
+            <div className="text-gray-400 text-sm">
+              {recentAnalyses.length > 0 ? 'Completed Analyses' : 'AI Accuracy'}
+            </div>
           </div>
         </div>
 
@@ -267,27 +285,106 @@ export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
         <div className="grid md:grid-cols-2 gap-6">
           {/* Recent Activity */}
           <div className={`transition-all duration-1000 delay-600 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <h2 className="text-2xl font-bold text-white mb-6">Recent Activity</h2>
-            <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white">Recent Churn Analyses</h2>
+            </div>
+            <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:border-purple-500/30 transition-all duration-300">
               <div className="space-y-4">
-                {recentActivity.map((activity, index) => (
-                  <div
-                    key={index}
-                    className="group flex items-center p-4 bg-gray-900/50 rounded-2xl hover:bg-gray-900/70 transition-all duration-200"
+                {recentAnalyses.length > 0 ? (
+                  recentAnalyses.map((analysis, index) => (
+                    <Link
+                      key={analysis.id}
+                      to={`/churn-analysis/${analysis.id}`}
+                      className={`group relative flex items-center p-5 bg-gradient-to-r from-gray-900/50 to-gray-900/30 rounded-2xl hover:from-purple-900/30 hover:to-blue-900/30 transition-all duration-500 cursor-pointer border border-gray-700/50 hover:border-purple-500/50 hover:scale-[1.02] overflow-hidden transform hover:shadow-xl hover:shadow-purple-500/10`}
+                      style={{
+                        animation: `slideInUp 0.6s ease-out ${600 + index * 150}ms both`
+                      }}
+                    >
+                      {/* Animated background effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      
+                      {/* Floating particles effect */}
+                      <div className="absolute inset-0 overflow-hidden">
+                        <div className="absolute w-2 h-2 bg-purple-400/20 rounded-full top-4 left-4 animate-pulse"></div>
+                        <div className="absolute w-1 h-1 bg-blue-400/30 rounded-full top-8 right-8 animate-pulse delay-300"></div>
+                        <div className="absolute w-1.5 h-1.5 bg-purple-300/20 rounded-full bottom-6 left-12 animate-pulse delay-700"></div>
+                      </div>
+
+                      <div className="relative z-10 w-14 h-14 rounded-2xl flex items-center justify-center mr-5 bg-gradient-to-br from-purple-500/20 to-blue-500/20 text-purple-400 group-hover:from-purple-500/30 group-hover:to-blue-500/30 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
+                        <svg className="w-6 h-6 group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                      </div>
+                      
+                      <div className="flex-1 relative z-10">
+                        <div className="text-white text-base font-semibold group-hover:text-purple-300 transition-colors duration-300 mb-2">
+                          {analysis.name}
+                        </div>
+                        <div className="flex items-center gap-5 text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
+                          <span className="flex items-center gap-1">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            {analysis.total_customers.toLocaleString()} customers
+                          </span>
+                          <span className="flex items-center gap-1 text-red-400">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                            {analysis.high_risk_customers} high risk
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            {new Date(analysis.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="relative z-10 text-right mr-2">
+                        <div className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors duration-300">
+                          {(analysis.avg_churn_risk * 100).toFixed(1)}%
+                        </div>
+                        <div className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors">avg risk</div>
+                      </div>
+
+                      {/* Hover arrow indicator */}
+                      <div className="relative z-10 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+                        <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                      </div>
+                    </Link>
+                  ))
+                ) : (
+                  <div 
+                    className="text-center py-12"
+                    style={{ animation: 'fadeIn 1s ease-out 1s both' }}
                   >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mr-4 ${
-                      activity.type === 'success' ? 'bg-green-500/20 text-green-400' :
-                      activity.type === 'info' ? 'bg-blue-500/20 text-blue-400' :
-                      'bg-yellow-500/20 text-yellow-400'
-                    }`}>
-                      {activity.icon}
+                    <div className="w-20 h-20 bg-gradient-to-br from-gray-700/50 to-gray-600/30 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+                      <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
                     </div>
-                    <div className="flex-1">
-                      <div className="text-white text-sm font-medium">{activity.message}</div>
-                      <div className="text-gray-400 text-xs">{activity.time}</div>
-                    </div>
+                    <p className="text-gray-400 font-semibold text-lg mb-2">No churn analyses yet</p>
+                    <p className="text-gray-500 text-sm mb-6">Upload customer data to see powerful AI insights</p>
+                    <Link 
+                      to="/churn-analysis" 
+                      className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-2xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/30 border border-purple-500/20 hover:border-purple-400/40"
+                    >
+                      <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center group-hover:rotate-180 transition-transform duration-500">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                      </div>
+                      Create First Analysis
+                      <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </Link>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>

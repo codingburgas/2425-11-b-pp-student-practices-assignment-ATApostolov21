@@ -12,6 +12,15 @@ export interface LoanRequest {
   credit_score: number;
 }
 
+export interface ChurnAnalysisListItem {
+  id: number;
+  name: string;
+  created_at: string;
+  total_customers: number;
+  avg_churn_risk: number;
+  high_risk_customers: number;
+}
+
 export interface ChurnAnalysis {
   total_customers: number;
   churn_risk_high: number;
