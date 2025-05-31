@@ -94,8 +94,8 @@ export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
       title: 'Customer Churn Analysis',
       description: 'Upload customer data and get AI-powered churn predictions with actionable insights',
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
         </svg>
       ),
       gradient: 'from-red-500 to-pink-500',
@@ -106,8 +106,8 @@ export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
       title: 'Loan Management',
       description: 'Review and manage customer loan applications with AI recommendations',
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       ),
       gradient: 'from-blue-500 to-indigo-500',
@@ -118,7 +118,7 @@ export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
       title: 'Risk Assessment',
       description: 'AI-powered risk evaluation and credit scoring for loan applications',
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
         </svg>
       ),
@@ -161,77 +161,137 @@ export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
 
         {/* Analytics Overview */}
         <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300 hover:border-blue-500/30">
+          {/* Total Customers Card */}
+          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300 hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/10">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300 shadow-lg">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                 </svg>
               </div>
-              <span className="text-blue-400 text-sm font-medium">
-                {recentAnalyses.length > 0 ? 'analyzed customers' : '+12% this month'}
-              </span>
+              <div className="text-right">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse mb-1"></div>
+                <span className="text-blue-400 text-xs font-semibold block">
+                  {recentAnalyses.length > 0 ? 'ANALYZED' : 'ACTIVE'}
+                </span>
+              </div>
             </div>
-            <div className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-1">
+            <div className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2">
               {animatedStats.activeCustomers.toLocaleString() || '2,847'}
             </div>
-            <div className="text-gray-400 text-sm">
-              {recentAnalyses.length > 0 ? 'Total Customers in Latest Analysis' : 'Active Customers'}
+            <div className="text-gray-400 text-sm font-medium">
+              {recentAnalyses.length > 0 ? 'Total Customers Analyzed' : 'Active Bank Customers'}
+            </div>
+            <div className="mt-3 flex items-center">
+              <div className="flex-1 bg-gray-700/50 rounded-full h-1.5">
+                <div className="bg-gradient-to-r from-blue-500 to-cyan-500 h-1.5 rounded-full w-3/4 transition-all duration-1000"></div>
+              </div>
+              <span className="text-xs text-blue-400 ml-2 font-medium">75%</span>
             </div>
           </div>
 
-          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300 hover:border-red-500/30">
+          {/* High Risk Customers Card */}
+          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300 hover:border-red-500/30 hover:shadow-2xl hover:shadow-red-500/10">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-14 h-14 bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300 shadow-lg">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
               </div>
-              <span className="text-red-400 text-sm font-medium">
-                {recentAnalyses.length > 0 ? 'high risk customers' : 'risk alerts'}
-              </span>
+              <div className="text-right">
+                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse mb-1"></div>
+                <span className="text-red-400 text-xs font-semibold block">
+                  {recentAnalyses.length > 0 ? 'HIGH RISK' : 'ALERTS'}
+                </span>
+              </div>
             </div>
-            <div className="text-3xl font-bold bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent mb-1">
+            <div className="text-3xl font-bold bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent mb-2">
               {animatedStats.loansProcessed}
             </div>
-            <div className="text-gray-400 text-sm">
-              {recentAnalyses.length > 0 ? 'High Risk Customers Identified' : 'Loans Processed'}
+            <div className="text-gray-400 text-sm font-medium">
+              {recentAnalyses.length > 0 ? 'High Risk Customers' : 'Risk Alerts Today'}
+            </div>
+            <div className="mt-3 flex items-center">
+              <div className="flex-1 bg-gray-700/50 rounded-full h-1.5">
+                <div className="bg-gradient-to-r from-red-500 to-pink-500 h-1.5 rounded-full w-1/4 transition-all duration-1000"></div>
+              </div>
+              <span className="text-xs text-red-400 ml-2 font-medium">25%</span>
             </div>
           </div>
 
-          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300 hover:border-yellow-500/30">
+          {/* Average Churn Risk Card */}
+          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300 hover:border-yellow-500/30 hover:shadow-2xl hover:shadow-yellow-500/10">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+              <div className="w-14 h-14 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300 shadow-lg">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <span className="text-yellow-400 text-sm font-medium">
-                {recentAnalyses.length > 0 ? 'average churn risk' : '-0.5% improvement'}
-              </span>
+              <div className="text-right">
+                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse mb-1"></div>
+                <span className="text-yellow-400 text-xs font-semibold block">
+                  {recentAnalyses.length > 0 ? 'AVG RISK' : 'TRENDING'}
+                </span>
+              </div>
             </div>
-            <div className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-1">
+            <div className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-2">
               {animatedStats.churnRate}%
             </div>
-            <div className="text-gray-400 text-sm">Average Churn Risk Score</div>
-          </div>
-
-          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300 hover:border-purple-500/30">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+            <div className="text-gray-400 text-sm font-medium">Average Churn Risk Score</div>
+            <div className="mt-3 flex items-center">
+              <div className="flex-1 bg-gray-700/50 rounded-full h-1.5">
+                <div 
+                  className="bg-gradient-to-r from-yellow-500 to-orange-500 h-1.5 rounded-full transition-all duration-1000"
+                  style={{ width: `${Math.min(animatedStats.churnRate * 2, 100)}%` }}
+                ></div>
               </div>
-              <span className="text-purple-400 text-sm font-medium">
-                {recentAnalyses.length > 0 ? 'analysis insights' : 'model performance'}
+              <span className="text-xs text-yellow-400 ml-2 font-medium">
+                {animatedStats.churnRate > 30 ? 'HIGH' : animatedStats.churnRate > 15 ? 'MED' : 'LOW'}
               </span>
             </div>
-            <div className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-1">
+          </div>
+
+          {/* Analysis Count / AI Accuracy Card */}
+          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300 hover:border-purple-500/30 hover:shadow-2xl hover:shadow-purple-500/10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300 shadow-lg">
+                {recentAnalyses.length > 0 ? (
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                ) : (
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                )}
+              </div>
+              <div className="text-right">
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse mb-1"></div>
+                <span className="text-purple-400 text-xs font-semibold block">
+                  {recentAnalyses.length > 0 ? 'REPORTS' : 'AI MODEL'}
+                </span>
+              </div>
+            </div>
+            <div className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
               {recentAnalyses.length > 0 ? recentAnalyses.length : animatedStats.aiAccuracy + '%'}
             </div>
-            <div className="text-gray-400 text-sm">
-              {recentAnalyses.length > 0 ? 'Completed Analyses' : 'AI Accuracy'}
+            <div className="text-gray-400 text-sm font-medium">
+              {recentAnalyses.length > 0 ? 'Completed Analyses' : 'AI Model Accuracy'}
+            </div>
+            <div className="mt-3 flex items-center">
+              <div className="flex-1 bg-gray-700/50 rounded-full h-1.5">
+                <div 
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 h-1.5 rounded-full transition-all duration-1000"
+                  style={{ 
+                    width: recentAnalyses.length > 0 
+                      ? `${Math.min(recentAnalyses.length * 25, 100)}%` 
+                      : `${animatedStats.aiAccuracy}%` 
+                  }}
+                ></div>
+              </div>
+              <span className="text-xs text-purple-400 ml-2 font-medium">
+                {recentAnalyses.length > 0 ? 'ACTIVE' : 'OPTIMAL'}
+              </span>
             </div>
           </div>
         </div>
