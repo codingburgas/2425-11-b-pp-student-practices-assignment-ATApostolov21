@@ -50,4 +50,7 @@ export const banking = {
 
   getChurnAnalysis: (id: number) =>
     api.get(`${API_CONFIG.ENDPOINTS.ADMIN.CHURN_ANALYSIS}/${id}`),
+
+  deleteChurnAnalysis: (id: number) =>
+    api.delete(`${API_CONFIG.ENDPOINTS.ADMIN.DELETE_CHURN_ANALYSIS}/${id}`),
 }; 

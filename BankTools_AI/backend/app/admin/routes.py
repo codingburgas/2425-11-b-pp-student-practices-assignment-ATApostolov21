@@ -309,6 +309,7 @@ def get_churn_analysis(analysis_id):
     
     return jsonify({
         'analysis_id': analysis.id,
+        'name': analysis.name,
         'created_at': analysis.created_at.isoformat(),
         'results': analysis.results
     })
@@ -316,19 +317,49 @@ def get_churn_analysis(analysis_id):
 @bp.route('/churn-analyses', methods=['GET'])
 @login_required
 def list_churn_analyses():
-    """List all churn analyses for the current employee"""
     if current_user.role != 'banking_employee':
         return jsonify({'error': 'Unauthorized access'}), 403
     
-    analyses = ChurnAnalysis.query.filter_by(employee_id=current_user.id).order_by(ChurnAnalysis.created_at.desc()).all()
+    try:
+        analyses = ChurnAnalysis.query.filter_by(employee_id=current_user.id).order_by(ChurnAnalysis.created_at.desc()).all()
+        
+        return jsonify({
+            'analyses': [{
+                'id': analysis.id,
+                'name': analysis.name,
+                'created_at': analysis.created_at.isoformat(),
+                'total_customers': analysis.results.get('summary', {}).get('total_customers', 0),
+                'avg_churn_risk': analysis.results.get('summary', {}).get('avg_churn_risk', 0),
+                'high_risk_customers': analysis.results.get('summary', {}).get('high_risk_customers', 0)
+            } for analysis in analyses]
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error fetching churn analyses: {str(e)}")
+        return jsonify({'error': 'Failed to fetch analyses'}), 500
+
+@bp.route('/churn-analysis/<int:analysis_id>', methods=['DELETE'])
+@login_required
+def delete_churn_analysis(analysis_id):
+    if current_user.role != 'banking_employee':
+        return jsonify({'error': 'Unauthorized access'}), 403
     
-    return jsonify({
-        'analyses': [{
-            'id': analysis.id,
-            'name': analysis.name,
-            'created_at': analysis.created_at.isoformat(),
-            'total_customers': analysis.results.get('summary', {}).get('total_customers', 0),
-            'avg_churn_risk': analysis.results.get('summary', {}).get('avg_churn_risk', 0),
-            'high_risk_customers': analysis.results.get('summary', {}).get('high_risk_customers', 0)
-        } for analysis in analyses]
-    }) 
+    try:
+        analysis = ChurnAnalysis.query.get_or_404(analysis_id)
+        
+        # Store analysis name for response
+        analysis_name = analysis.name
+        
+        # Delete the analysis from database
+        db.session.delete(analysis)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Analysis "{analysis_name}" has been successfully deleted'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting churn analysis {analysis_id}: {str(e)}")
+        return jsonify({'error': 'Failed to delete analysis'}), 500 

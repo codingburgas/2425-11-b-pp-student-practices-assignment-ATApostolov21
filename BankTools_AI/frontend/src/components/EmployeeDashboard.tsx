@@ -23,6 +23,7 @@ export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
     aiAccuracy: 99.7,
     loansProcessed: 486
   })
+  const [deletingAnalysisId, setDeletingAnalysisId] = useState<number | null>(null)
 
   useEffect(() => {
     setIsVisible(true)
@@ -88,6 +89,63 @@ export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
     const animationTimeout = setTimeout(animateStats, 500)
     return () => clearTimeout(animationTimeout)
   }, [realStats.totalCustomers, realStats.avgChurnRate])
+
+  // Delete analysis function
+  const deleteAnalysis = async (analysisId: number, analysisName: string) => {
+    if (!confirm(`Are you sure you want to delete the analysis "${analysisName}"? This action cannot be undone.`)) {
+      return
+    }
+
+    setDeletingAnalysisId(analysisId)
+    
+    try {
+      await banking.deleteChurnAnalysis(analysisId)
+      
+      // Remove from local state
+      setRecentAnalyses(prev => prev.filter(analysis => analysis.id !== analysisId))
+      
+      // Show success message
+      const successMessage = document.createElement('div')
+      successMessage.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in'
+      successMessage.innerHTML = `
+        <div class="flex items-center gap-3">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          <span>Analysis "${analysisName}" deleted successfully!</span>
+        </div>
+      `
+      document.body.appendChild(successMessage)
+      setTimeout(() => {
+        if (document.body.contains(successMessage)) {
+          document.body.removeChild(successMessage)
+        }
+      }, 3000)
+      
+    } catch (error) {
+      console.error('Failed to delete analysis:', error)
+      
+      // Show error message
+      const errorMessage = document.createElement('div')
+      errorMessage.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in'
+      errorMessage.innerHTML = `
+        <div class="flex items-center gap-3">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+          <span>Failed to delete analysis. Please try again.</span>
+        </div>
+      `
+      document.body.appendChild(errorMessage)
+      setTimeout(() => {
+        if (document.body.contains(errorMessage)) {
+          document.body.removeChild(errorMessage)
+        }
+      }, 3000)
+    } finally {
+      setDeletingAnalysisId(null)
+    }
+  }
 
   const analyticsTools = [
     {
@@ -348,100 +406,100 @@ export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">Recent Churn Analyses</h2>
             </div>
-            <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:border-purple-500/30 transition-all duration-300">
-              <div className="space-y-4">
+            <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-6">
+              <div className="space-y-3">
                 {recentAnalyses.length > 0 ? (
                   recentAnalyses.map((analysis, index) => (
-                    <Link
+                    <div
                       key={analysis.id}
-                      to={`/churn-analysis/${analysis.id}`}
-                      className={`group relative flex items-center p-5 bg-gradient-to-r from-gray-900/50 to-gray-900/30 rounded-2xl hover:from-purple-900/30 hover:to-blue-900/30 transition-all duration-500 cursor-pointer border border-gray-700/50 hover:border-purple-500/50 hover:scale-[1.02] overflow-hidden transform hover:shadow-xl hover:shadow-purple-500/10`}
-                      style={{
-                        animation: `slideInUp 0.6s ease-out ${600 + index * 150}ms both`
-                      }}
+                      className="group flex items-center p-4 bg-gray-900/40 rounded-xl hover:bg-gray-900/60 transition-all duration-300 border border-gray-700/30 hover:border-purple-500/40"
                     >
-                      {/* Animated background effect */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                      
-                      {/* Floating particles effect */}
-                      <div className="absolute inset-0 overflow-hidden">
-                        <div className="absolute w-2 h-2 bg-purple-400/20 rounded-full top-4 left-4 animate-pulse"></div>
-                        <div className="absolute w-1 h-1 bg-blue-400/30 rounded-full top-8 right-8 animate-pulse delay-300"></div>
-                        <div className="absolute w-1.5 h-1.5 bg-purple-300/20 rounded-full bottom-6 left-12 animate-pulse delay-700"></div>
-                      </div>
-
-                      <div className="relative z-10 w-14 h-14 rounded-2xl flex items-center justify-center mr-5 bg-gradient-to-br from-purple-500/20 to-blue-500/20 text-purple-400 group-hover:from-purple-500/30 group-hover:to-blue-500/30 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
-                        <svg className="w-6 h-6 group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      {/* Icon */}
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mr-4 bg-purple-500/20 text-purple-400 group-hover:bg-purple-500/30 transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                       </div>
                       
-                      <div className="flex-1 relative z-10">
-                        <div className="text-white text-base font-semibold group-hover:text-purple-300 transition-colors duration-300 mb-2">
-                          {analysis.name}
+                      {/* Content - Clickable Link */}
+                      <Link
+                        to={`/churn-analysis/${analysis.id}`}
+                        className="flex-1 flex items-center cursor-pointer"
+                      >
+                        <div className="flex-1">
+                          <div className="text-white font-medium group-hover:text-purple-300 transition-colors mb-1">
+                            {analysis.name}
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-gray-400">
+                            <span>{analysis.total_customers.toLocaleString()} customers</span>
+                            <span className="text-red-400">{analysis.high_risk_customers} high risk</span>
+                            <span>{new Date(analysis.created_at).toLocaleDateString()}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-5 text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
-                          <span className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            {analysis.total_customers.toLocaleString()} customers
-                          </span>
-                          <span className="flex items-center gap-1 text-red-400">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                            </svg>
-                            {analysis.high_risk_customers} high risk
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            {new Date(analysis.created_at).toLocaleDateString()}
-                          </span>
+                        
+                        {/* Risk Score */}
+                        <div className="text-right mr-3">
+                          <div className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors">
+                            {(analysis.avg_churn_risk * 100).toFixed(1)}%
+                          </div>
+                          <div className="text-xs text-gray-400">avg risk</div>
                         </div>
-                      </div>
-                      
-                      <div className="relative z-10 text-right mr-2">
-                        <div className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors duration-300">
-                          {(analysis.avg_churn_risk * 100).toFixed(1)}%
-                        </div>
-                        <div className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors">avg risk</div>
-                      </div>
 
-                      {/* Hover arrow indicator */}
-                      <div className="relative z-10 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-                        <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                        </svg>
-                      </div>
-                    </Link>
+                        {/* Arrow */}
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity mr-3">
+                          <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </Link>
+
+                      {/* Delete Button */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          deleteAnalysis(analysis.id, analysis.name)
+                        }}
+                        disabled={deletingAnalysisId === analysis.id}
+                        className="group/delete relative w-10 h-10 rounded-lg flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Delete Analysis"
+                      >
+                        {deletingAnalysisId === analysis.id ? (
+                          <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin"></div>
+                        ) : (
+                          <>
+                            {/* Floating particles on hover */}
+                            <div className="absolute inset-0 opacity-0 group-hover/delete:opacity-100 transition-opacity duration-300">
+                              <div className="absolute top-1 left-1 w-0.5 h-0.5 bg-red-400 rounded-full animate-ping"></div>
+                              <div className="absolute top-2 right-1 w-0.5 h-0.5 bg-red-300 rounded-full animate-ping delay-200"></div>
+                              <div className="absolute bottom-1 left-2 w-0.5 h-0.5 bg-red-400 rounded-full animate-ping delay-400"></div>
+                            </div>
+                            
+                            <svg className="w-4 h-4 text-red-400 group-hover/delete:text-red-300 group-hover/delete:animate-bounce transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   ))
                 ) : (
-                  <div 
-                    className="text-center py-12"
-                    style={{ animation: 'fadeIn 1s ease-out 1s both' }}
-                  >
-                    <div className="w-20 h-20 bg-gradient-to-br from-gray-700/50 to-gray-600/30 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
-                      <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
                     </div>
-                    <p className="text-gray-400 font-semibold text-lg mb-2">No churn analyses yet</p>
-                    <p className="text-gray-500 text-sm mb-6">Upload customer data to see powerful AI insights</p>
+                    <p className="text-gray-400 font-medium mb-2">No analyses yet</p>
+                    <p className="text-gray-500 text-sm mb-4">Upload customer data to get started</p>
                     <Link 
                       to="/churn-analysis" 
-                      className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-2xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/30 border border-purple-500/20 hover:border-purple-400/40"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors"
                     >
-                      <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center group-hover:rotate-180 transition-transform duration-500">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                      </div>
-                      Create First Analysis
-                      <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                       </svg>
+                      Create Analysis
                     </Link>
                   </div>
                 )}
