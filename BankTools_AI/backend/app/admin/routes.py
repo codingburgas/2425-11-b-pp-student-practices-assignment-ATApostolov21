@@ -345,7 +345,11 @@ def delete_churn_analysis(analysis_id):
         return jsonify({'error': 'Unauthorized access'}), 403
     
     try:
-        analysis = ChurnAnalysis.query.get_or_404(analysis_id)
+        # Ensure user can only delete their own analyses
+        analysis = ChurnAnalysis.query.filter_by(id=analysis_id, employee_id=current_user.id).first()
+        
+        if not analysis:
+            return jsonify({'error': 'Analysis not found or access denied'}), 404
         
         # Store analysis name for response
         analysis_name = analysis.name

@@ -217,139 +217,191 @@ export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
           </div>
         </div>
 
-        {/* Analytics Overview */}
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        {/* Enhanced Analytics Overview with Premium Animations */}
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           {/* Total Customers Card */}
-          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300 hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300 shadow-lg">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                </svg>
-              </div>
-              <div className="text-right">
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse mb-1"></div>
-                <span className="text-blue-400 text-xs font-semibold block">
-                  {recentAnalyses.length > 0 ? 'ANALYZED' : 'ACTIVE'}
-                </span>
-              </div>
+          <div className="group relative bg-gradient-to-br from-gray-900/80 via-gray-800/60 to-gray-900/80 backdrop-blur-xl rounded-3xl p-8 border border-gray-700/50 hover:border-blue-400/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20 overflow-hidden">
+            {/* Animated background gradient */}
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-transparent to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            
+            {/* Floating particles on hover */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <div className="absolute top-4 left-4 w-1 h-1 bg-blue-400 rounded-full animate-ping"></div>
+              <div className="absolute top-8 right-6 w-0.5 h-0.5 bg-cyan-300 rounded-full animate-ping delay-200"></div>
+              <div className="absolute bottom-6 left-8 w-0.5 h-0.5 bg-blue-300 rounded-full animate-ping delay-400"></div>
+              <div className="absolute bottom-4 right-4 w-1 h-1 bg-cyan-400 rounded-full animate-ping delay-600"></div>
             </div>
-            <div className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2">
-              {animatedStats.activeCustomers.toLocaleString() || '2,847'}
-            </div>
-            <div className="text-gray-400 text-sm font-medium">
-              {recentAnalyses.length > 0 ? 'Total Customers Analyzed' : 'Active Bank Customers'}
-            </div>
-            <div className="mt-3 flex items-center">
-              <div className="flex-1 bg-gray-700/50 rounded-full h-1.5">
-                <div className="bg-gradient-to-r from-blue-500 to-cyan-500 h-1.5 rounded-full w-3/4 transition-all duration-1000"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-6">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 shadow-lg group-hover:shadow-blue-500/50">
+                  <svg className="w-8 h-8 text-white group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                </div>
+                <div className="text-right">
+                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse mb-2 group-hover:animate-bounce"></div>
+                  <span className="text-blue-400 text-xs font-bold tracking-wider">
+                    {recentAnalyses.length > 0 ? 'ANALYZED' : 'ACTIVE'}
+                  </span>
+                </div>
               </div>
-              <span className="text-xs text-blue-400 ml-2 font-medium">75%</span>
+              <div className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-300 bg-clip-text text-transparent mb-3 group-hover:scale-105 transition-transform duration-300">
+                {animatedStats.activeCustomers.toLocaleString() || '2,847'}
+              </div>
+              <div className="text-gray-300 text-sm font-medium mb-4 group-hover:text-blue-200 transition-colors duration-300">
+                {recentAnalyses.length > 0 ? 'Total Customers Analyzed' : 'Active Bank Customers'}
+              </div>
+              <div className="flex items-center">
+                <div className="flex-1 bg-gray-700/50 rounded-full h-2 overflow-hidden">
+                  <div className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full w-3/4 transition-all duration-1000 group-hover:animate-pulse"></div>
+                </div>
+                <span className="text-xs text-blue-400 ml-3 font-bold group-hover:text-blue-300 transition-colors">75%</span>
+              </div>
             </div>
           </div>
 
           {/* High Risk Customers Card */}
-          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300 hover:border-red-500/30 hover:shadow-2xl hover:shadow-red-500/10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300 shadow-lg">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-              <div className="text-right">
-                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse mb-1"></div>
-                <span className="text-red-400 text-xs font-semibold block">
-                  {recentAnalyses.length > 0 ? 'HIGH RISK' : 'ALERTS'}
-                </span>
-              </div>
+          <div className="group relative bg-gradient-to-br from-gray-900/80 via-gray-800/60 to-gray-900/80 backdrop-blur-xl rounded-3xl p-8 border border-gray-700/50 hover:border-red-400/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-red-500/20 overflow-hidden">
+            {/* Animated background gradient */}
+            <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 via-transparent to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            
+            {/* Floating particles on hover */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <div className="absolute top-4 left-4 w-1 h-1 bg-red-400 rounded-full animate-ping"></div>
+              <div className="absolute top-8 right-6 w-0.5 h-0.5 bg-pink-300 rounded-full animate-ping delay-200"></div>
+              <div className="absolute bottom-6 left-8 w-0.5 h-0.5 bg-red-300 rounded-full animate-ping delay-400"></div>
+              <div className="absolute bottom-4 right-4 w-1 h-1 bg-pink-400 rounded-full animate-ping delay-600"></div>
             </div>
-            <div className="text-3xl font-bold bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent mb-2">
-              {animatedStats.loansProcessed}
-            </div>
-            <div className="text-gray-400 text-sm font-medium">
-              {recentAnalyses.length > 0 ? 'High Risk Customers' : 'Risk Alerts Today'}
-            </div>
-            <div className="mt-3 flex items-center">
-              <div className="flex-1 bg-gray-700/50 rounded-full h-1.5">
-                <div className="bg-gradient-to-r from-red-500 to-pink-500 h-1.5 rounded-full w-1/4 transition-all duration-1000"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-6">
+                <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 shadow-lg group-hover:shadow-red-500/50">
+                  <svg className="w-8 h-8 text-white group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div className="text-right">
+                  <div className="w-3 h-3 bg-red-400 rounded-full animate-pulse mb-2 group-hover:animate-bounce"></div>
+                  <span className="text-red-400 text-xs font-bold tracking-wider">
+                    {recentAnalyses.length > 0 ? 'HIGH RISK' : 'ALERTS'}
+                  </span>
+                </div>
               </div>
-              <span className="text-xs text-red-400 ml-2 font-medium">25%</span>
+              <div className="text-4xl font-bold bg-gradient-to-r from-red-400 via-pink-400 to-red-300 bg-clip-text text-transparent mb-3 group-hover:scale-105 transition-transform duration-300">
+                {animatedStats.loansProcessed}
+              </div>
+              <div className="text-gray-300 text-sm font-medium mb-4 group-hover:text-red-200 transition-colors duration-300">
+                {recentAnalyses.length > 0 ? 'High Risk Customers' : 'Risk Alerts Today'}
+              </div>
+              <div className="flex items-center">
+                <div className="flex-1 bg-gray-700/50 rounded-full h-2 overflow-hidden">
+                  <div className="bg-gradient-to-r from-red-500 to-pink-500 h-2 rounded-full w-1/4 transition-all duration-1000 group-hover:animate-pulse"></div>
+                </div>
+                <span className="text-xs text-red-400 ml-3 font-bold group-hover:text-red-300 transition-colors">25%</span>
+              </div>
             </div>
           </div>
 
           {/* Average Churn Risk Card */}
-          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300 hover:border-yellow-500/30 hover:shadow-2xl hover:shadow-yellow-500/10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300 shadow-lg">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+          <div className="group relative bg-gradient-to-br from-gray-900/80 via-gray-800/60 to-gray-900/80 backdrop-blur-xl rounded-3xl p-8 border border-gray-700/50 hover:border-yellow-400/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-yellow-500/20 overflow-hidden">
+            {/* Animated background gradient */}
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 via-transparent to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            
+            {/* Floating particles on hover */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <div className="absolute top-4 left-4 w-1 h-1 bg-yellow-400 rounded-full animate-ping"></div>
+              <div className="absolute top-8 right-6 w-0.5 h-0.5 bg-orange-300 rounded-full animate-ping delay-200"></div>
+              <div className="absolute bottom-6 left-8 w-0.5 h-0.5 bg-yellow-300 rounded-full animate-ping delay-400"></div>
+              <div className="absolute bottom-4 right-4 w-1 h-1 bg-orange-400 rounded-full animate-ping delay-600"></div>
+            </div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-6">
+                <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 shadow-lg group-hover:shadow-yellow-500/50">
+                  <svg className="w-8 h-8 text-white group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="text-right">
+                  <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse mb-2 group-hover:animate-bounce"></div>
+                  <span className="text-yellow-400 text-xs font-bold tracking-wider">
+                    {recentAnalyses.length > 0 ? 'AVG RISK' : 'TRENDING'}
+                  </span>
+                </div>
               </div>
-              <div className="text-right">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse mb-1"></div>
-                <span className="text-yellow-400 text-xs font-semibold block">
-                  {recentAnalyses.length > 0 ? 'AVG RISK' : 'TRENDING'}
+              <div className="text-4xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-300 bg-clip-text text-transparent mb-3 group-hover:scale-105 transition-transform duration-300">
+                {animatedStats.churnRate}%
+              </div>
+              <div className="text-gray-300 text-sm font-medium mb-4 group-hover:text-yellow-200 transition-colors duration-300">Average Churn Risk Score</div>
+              <div className="flex items-center">
+                <div className="flex-1 bg-gray-700/50 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-yellow-500 to-orange-500 h-2 rounded-full transition-all duration-1000 group-hover:animate-pulse"
+                    style={{ width: `${Math.min(animatedStats.churnRate * 2, 100)}%` }}
+                  ></div>
+                </div>
+                <span className="text-xs text-yellow-400 ml-3 font-bold group-hover:text-yellow-300 transition-colors">
+                  {animatedStats.churnRate > 30 ? 'HIGH' : animatedStats.churnRate > 15 ? 'MED' : 'LOW'}
                 </span>
               </div>
-            </div>
-            <div className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-2">
-              {animatedStats.churnRate}%
-            </div>
-            <div className="text-gray-400 text-sm font-medium">Average Churn Risk Score</div>
-            <div className="mt-3 flex items-center">
-              <div className="flex-1 bg-gray-700/50 rounded-full h-1.5">
-                <div 
-                  className="bg-gradient-to-r from-yellow-500 to-orange-500 h-1.5 rounded-full transition-all duration-1000"
-                  style={{ width: `${Math.min(animatedStats.churnRate * 2, 100)}%` }}
-                ></div>
-              </div>
-              <span className="text-xs text-yellow-400 ml-2 font-medium">
-                {animatedStats.churnRate > 30 ? 'HIGH' : animatedStats.churnRate > 15 ? 'MED' : 'LOW'}
-              </span>
             </div>
           </div>
 
           {/* Analysis Count / AI Accuracy Card */}
-          <div className="group bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 hover:scale-105 transition-all duration-300 hover:border-purple-500/30 hover:shadow-2xl hover:shadow-purple-500/10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-300 shadow-lg">
-                {recentAnalyses.length > 0 ? (
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                ) : (
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                )}
+          <div className="group relative bg-gradient-to-br from-gray-900/80 via-gray-800/60 to-gray-900/80 backdrop-blur-xl rounded-3xl p-8 border border-gray-700/50 hover:border-purple-400/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/20 overflow-hidden">
+            {/* Animated background gradient */}
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-transparent to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            
+            {/* Floating particles on hover */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <div className="absolute top-4 left-4 w-1 h-1 bg-purple-400 rounded-full animate-ping"></div>
+              <div className="absolute top-8 right-6 w-0.5 h-0.5 bg-pink-300 rounded-full animate-ping delay-200"></div>
+              <div className="absolute bottom-6 left-8 w-0.5 h-0.5 bg-purple-300 rounded-full animate-ping delay-400"></div>
+              <div className="absolute bottom-4 right-4 w-1 h-1 bg-pink-400 rounded-full animate-ping delay-600"></div>
+            </div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-6">
+                <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center group-hover:rotate-12 group-hover:scale-110 transition-all duration-500 shadow-lg group-hover:shadow-purple-500/50">
+                  {recentAnalyses.length > 0 ? (
+                    <svg className="w-8 h-8 text-white group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-8 h-8 text-white group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                  )}
+                </div>
+                <div className="text-right">
+                  <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse mb-2 group-hover:animate-bounce"></div>
+                  <span className="text-purple-400 text-xs font-bold tracking-wider">
+                    {recentAnalyses.length > 0 ? 'REPORTS' : 'AI MODEL'}
+                  </span>
+                </div>
               </div>
-              <div className="text-right">
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse mb-1"></div>
-                <span className="text-purple-400 text-xs font-semibold block">
-                  {recentAnalyses.length > 0 ? 'REPORTS' : 'AI MODEL'}
+              <div className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-300 bg-clip-text text-transparent mb-3 group-hover:scale-105 transition-transform duration-300">
+                {recentAnalyses.length > 0 ? recentAnalyses.length : animatedStats.aiAccuracy + '%'}
+              </div>
+              <div className="text-gray-300 text-sm font-medium mb-4 group-hover:text-purple-200 transition-colors duration-300">
+                {recentAnalyses.length > 0 ? 'Completed Analyses' : 'AI Model Accuracy'}
+              </div>
+              <div className="flex items-center">
+                <div className="flex-1 bg-gray-700/50 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-1000 group-hover:animate-pulse"
+                    style={{ 
+                      width: recentAnalyses.length > 0 
+                        ? `${Math.min(recentAnalyses.length * 25, 100)}%` 
+                        : `${animatedStats.aiAccuracy}%` 
+                    }}
+                  ></div>
+                </div>
+                <span className="text-xs text-purple-400 ml-3 font-bold group-hover:text-purple-300 transition-colors">
+                  {recentAnalyses.length > 0 ? 'ACTIVE' : 'OPTIMAL'}
                 </span>
               </div>
-            </div>
-            <div className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
-              {recentAnalyses.length > 0 ? recentAnalyses.length : animatedStats.aiAccuracy + '%'}
-            </div>
-            <div className="text-gray-400 text-sm font-medium">
-              {recentAnalyses.length > 0 ? 'Completed Analyses' : 'AI Model Accuracy'}
-            </div>
-            <div className="mt-3 flex items-center">
-              <div className="flex-1 bg-gray-700/50 rounded-full h-1.5">
-                <div 
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 h-1.5 rounded-full transition-all duration-1000"
-                  style={{ 
-                    width: recentAnalyses.length > 0 
-                      ? `${Math.min(recentAnalyses.length * 25, 100)}%` 
-                      : `${animatedStats.aiAccuracy}%` 
-                  }}
-                ></div>
-              </div>
-              <span className="text-xs text-purple-400 ml-2 font-medium">
-                {recentAnalyses.length > 0 ? 'ACTIVE' : 'OPTIMAL'}
-              </span>
             </div>
           </div>
         </div>
