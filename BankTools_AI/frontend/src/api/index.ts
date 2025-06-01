@@ -31,8 +31,13 @@ export const auth = {
 };
 
 export const banking = {
+  // Use the user endpoint that handles simple form data and includes mapping logic
   submitLoanRequest: (data: LoanRequest) =>
     api.post(API_CONFIG.ENDPOINTS.USER.LOAN_REQUEST, data),
+  
+  // Enhanced AI-powered loan request using the full AI model format
+  submitAdvancedLoanRequest: (data: any) =>
+    api.post(API_CONFIG.ENDPOINTS.AI_MODELS.PREDICT_LOAN, data),
   
   uploadChurnAnalysis: (file: File, analysisName: string) => {
     const formData = new FormData();

@@ -9,6 +9,9 @@ export const API_CONFIG = {
     USER: {
       LOAN_REQUEST: '/user/loan-request',
     },
+    AI_MODELS: {
+      PREDICT_LOAN: '/api/predict-loan',
+    },
     ADMIN: {
       CHURN_UPLOAD: '/admin/churn-upload',
       CHURN_ANALYSES: '/admin/churn-analyses',

@@ -12,6 +12,51 @@ export interface LoanRequest {
   credit_score: number;
 }
 
+// Enhanced loan prediction response from AI model
+export interface LoanPredictionResponse {
+  success: boolean;
+  message?: string;
+  request_id?: number;
+  prediction: {
+    approval_status: 'Approved' | 'Rejected';
+    approval_probability: number;
+    confidence_level: 'High' | 'Medium' | 'Low';
+    recommendations: string[];
+  };
+  model_info: {
+    prediction_method: 'ai_model' | 'rule_based' | 'error_fallback';
+    model_available: boolean;
+  };
+}
+
+// Risk assessment breakdown for visualization
+export interface RiskAssessment {
+  creditScore: {
+    score: number;
+    rating: 'Excellent' | 'Good' | 'Fair' | 'Poor';
+    impact: 'Positive' | 'Neutral' | 'Negative';
+    weight: number;
+  };
+  income: {
+    amount: number;
+    adequacy: 'High' | 'Medium' | 'Low';
+    impact: 'Positive' | 'Neutral' | 'Negative';
+    weight: number;
+  };
+  employment: {
+    years: number;
+    stability: 'Excellent' | 'Good' | 'Fair' | 'Poor';
+    impact: 'Positive' | 'Neutral' | 'Negative';
+    weight: number;
+  };
+  debtToIncome: {
+    ratio: number;
+    level: 'Low' | 'Moderate' | 'High' | 'Very High';
+    impact: 'Positive' | 'Neutral' | 'Negative';
+    weight: number;
+  };
+}
+
 export interface ChurnAnalysisListItem {
   id: number;
   name: string;

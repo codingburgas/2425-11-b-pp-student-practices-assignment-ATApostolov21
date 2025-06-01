@@ -9,6 +9,11 @@ import os
 import traceback
 from .churn_model import ChurnPredictor
 from .loan_model import LoanPredictor
+from .loan_utils import (
+    validate_loan_application_data,
+    predict_loan_approval,
+    format_prediction_response
+)
 
 ai_models = Blueprint('ai_models', __name__)
 
@@ -47,6 +52,10 @@ def load_models():
     except Exception as e:
         print(f"Error loading models: {str(e)}")
         traceback.print_exc()
+
+def create_blueprint():
+    """Create and return the AI models blueprint"""
+    return ai_models
 
 @ai_models.route('/predict-churn', methods=['POST'])
 @login_required
@@ -123,7 +132,7 @@ def predict_churn():
 @login_required
 def predict_loan():
     """
-    Predict loan approval probability
+    Predict loan approval probability using unified prediction system
     Expected JSON format:
     {
         "Gender": "Male",
@@ -147,42 +156,32 @@ def predict_loan():
                 'error': 'Access denied. Only bank customers can access loan prediction.'
             }), 403
         
-        # Check if model is loaded
-        if loan_predictor is None or not loan_predictor.is_trained:
-            return jsonify({
-                'success': False,
-                'error': 'Loan prediction model is not available. Please contact administrator.'
-            }), 503
-        
         # Get applicant data from request
         applicant_data = request.get_json()
         
-        if not applicant_data:
-            return jsonify({
-                'success': False,
-                'error': 'No applicant data provided'
-            }), 400
-        
-        # Validate required fields
+        # Validate input data
         required_fields = ['Gender', 'Married', 'Dependents', 'Education', 'Self_Employed',
                           'ApplicantIncome', 'CoapplicantIncome', 'LoanAmount', 
                           'Loan_Amount_Term', 'Credit_History', 'Property_Area']
         
-        missing_fields = [field for field in required_fields if field not in applicant_data]
-        if missing_fields:
+        is_valid, error_message = validate_loan_application_data(applicant_data, required_fields)
+        if not is_valid:
             return jsonify({
                 'success': False,
-                'error': f'Missing required fields: {", ".join(missing_fields)}'
+                'error': error_message
             }), 400
         
-        # Make prediction
-        prediction = loan_predictor.predict(applicant_data)
+        # Use unified prediction system (no format conversion needed for full model data)
+        prediction_result = predict_loan_approval(applicant_data, use_simple_format=False)
         
-        return jsonify({
-            'success': True,
-            'prediction': prediction,
-            'applicant_data': applicant_data
-        })
+        # Format response
+        response = format_prediction_response(prediction_result)
+        response['applicant_data'] = applicant_data
+        
+        current_app.logger.info(f"Loan prediction for user {current_user.id}: "
+                              f"{prediction_result['approval_status']} using {prediction_result['prediction_method']}")
+        
+        return jsonify(response)
         
     except Exception as e:
         current_app.logger.error(f"Error in loan prediction: {str(e)}")
@@ -240,7 +239,7 @@ def train_models():
         return jsonify({
             'success': True,
             'message': 'Model training initiated. This process may take several minutes.',
-            'note': 'Please run the model training scripts manually: python churn_model.py and python loan_model.py'
+            'note': 'Please run the model training scripts manually: python train_churn_model.py and python train_loan_model.py'
         })
         
     except Exception as e:
