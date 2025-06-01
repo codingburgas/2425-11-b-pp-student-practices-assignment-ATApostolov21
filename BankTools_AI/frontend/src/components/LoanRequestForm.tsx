@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import type { FormEvent } from 'react'
 import { banking } from '../api'
 import type { LoanRequest, LoanPredictionResponse, RiskAssessment } from '../types'
+import LoanApplicationResults from './LoanApplicationResults'
 
 export default function LoanRequestForm() {
   const [formData, setFormData] = useState<LoanRequest>({
@@ -16,7 +17,7 @@ export default function LoanRequestForm() {
   const [error, setError] = useState('')
   const [isVisible, setIsVisible] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
-  const [showAdvancedAnalysis, setShowAdvancedAnalysis] = useState(false)
+  const [showResults, setShowResults] = useState(false)
 
   useEffect(() => {
     setIsVisible(true)
@@ -73,36 +74,61 @@ export default function LoanRequestForm() {
     }
   }, [formData])
 
-  // Calculate overall approval probability
+  // Updated approval probability calculation to better match backend AI model
   const approvalProbability = useMemo(() => {
     if (!formData.credit_score || !formData.income) return 0
     
+    // More conservative algorithm that better matches the AI model
+    const creditScore = formData.credit_score
+    const income = formData.income
+    const employment = formData.employment_years
+    const loanAmount = formData.amount
+    
+    // Base score from credit score (more conservative)
     let score = 0
-    const { creditScore, income, employment, debtToIncome } = riskAssessment
-    
-    // Credit score impact
-    if (creditScore.rating === 'Excellent') score += 40
-    else if (creditScore.rating === 'Good') score += 30
-    else if (creditScore.rating === 'Fair') score += 20
-    else score += 10
-    
-    // Income impact
-    if (income.adequacy === 'High') score += 30
-    else if (income.adequacy === 'Medium') score += 20
-    else score += 10
-    
-    // Employment impact
-    if (employment.stability === 'Excellent') score += 20
-    else if (employment.stability === 'Good') score += 15
-    else if (employment.stability === 'Fair') score += 10
+    if (creditScore >= 750) score += 25
+    else if (creditScore >= 700) score += 20
+    else if (creditScore >= 650) score += 15
+    else if (creditScore >= 600) score += 10
     else score += 5
     
-    // Debt-to-income impact
-    if (debtToIncome.level === 'Low') score += 10
-    else if (debtToIncome.level === 'Moderate') score += 5
+    // Income factor (more conservative)
+    const incomeToLoanRatio = income / (loanAmount || 1)
+    if (incomeToLoanRatio >= 3) score += 20
+    else if (incomeToLoanRatio >= 2) score += 15
+    else if (incomeToLoanRatio >= 1.5) score += 10
+    else if (incomeToLoanRatio >= 1) score += 5
     
-    return Math.min(95, Math.max(5, score))
-  }, [riskAssessment, formData])
+    // Employment stability (more conservative)
+    if (employment >= 5) score += 15
+    else if (employment >= 3) score += 10
+    else if (employment >= 2) score += 7
+    else if (employment >= 1) score += 3
+    
+    // Debt-to-income penalty (more strict)
+    const monthlyIncome = income / 12
+    const estimatedPayment = (loanAmount * 0.06) / 12 // Higher rate assumption
+    const dtiRatio = monthlyIncome > 0 ? estimatedPayment / monthlyIncome : 0
+    
+    if (dtiRatio <= 0.28) score += 10
+    else if (dtiRatio <= 0.36) score += 5
+    else if (dtiRatio <= 0.43) score -= 5
+    else score -= 15
+    
+    // Loan amount penalty for large loans
+    if (loanAmount > 100000) score -= 10
+    else if (loanAmount > 50000) score -= 5
+    
+    // Purpose bonus/penalty
+    const purpose = formData.purpose
+    if (purpose === 'Home Purchase' || purpose === 'Home Refinance') score += 5
+    else if (purpose === 'Education') score += 3
+    else if (purpose === 'Personal/Other') score -= 5
+    
+    // Cap the score and convert to percentage (more conservative range)
+    const finalScore = Math.min(85, Math.max(5, score))
+    return finalScore
+  }, [formData])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -127,8 +153,25 @@ export default function LoanRequestForm() {
       console.log('Submitting loan request with data:', formData)
       const response = await banking.submitLoanRequest(formData)
       console.log('Loan request response:', response.data)
+      
+      // Save result to localStorage for persistence
+      const resultId = Date.now().toString()
+      localStorage.setItem(`loan_result_${resultId}`, JSON.stringify(response.data))
+      
+      // Save to loan applications history
+      const existingApplications = JSON.parse(localStorage.getItem('loan_applications') || '[]')
+      const newApplication = {
+        id: resultId,
+        ...formData,
+        result: response.data,
+        created_at: new Date().toISOString(),
+        status: response.data.prediction.approval_status
+      }
+      existingApplications.unshift(newApplication)
+      localStorage.setItem('loan_applications', JSON.stringify(existingApplications))
+      
       setResult(response.data)
-      setShowAdvancedAnalysis(true)
+      setShowResults(true)
     } catch (err: any) {
       console.error('Loan request error:', err)
       console.error('Error response:', err.response)
@@ -179,6 +222,16 @@ export default function LoanRequestForm() {
       ...prev,
       [name]: name === 'purpose' ? value : Number(value)
     }))
+  }
+
+  const handleBackToForm = () => {
+    setShowResults(false)
+    setResult(null)
+  }
+
+  // If showing results, render the results page
+  if (showResults && result) {
+    return <LoanApplicationResults result={result} onBack={handleBackToForm} />
   }
 
   const loanPurposes = [
@@ -558,7 +611,7 @@ export default function LoanRequestForm() {
 
         {/* Enhanced Results Display */}
         {result && (
-          <div className={`mt-8 transition-all duration-1000 ${showAdvancedAnalysis ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <div className={`mt-8 transition-all duration-1000 ${showResults ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <div className={`p-8 rounded-3xl border backdrop-blur-sm ${
               result.prediction.approval_status === 'Approved' 
                 ? 'bg-green-500/10 border-green-500/30' 

@@ -62,17 +62,17 @@ export default function Layout({ children, user, onLogout }: LayoutProps) {
 
   const navigationItems = [
     {
-      name: 'Dashboard',
+      name: 'Loan Dashboard',
       path: '/',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       ),
       gradient: 'from-blue-500 to-cyan-500',
-      description: 'Overview & Analytics'
+      description: 'Loan Applications & AI Insights'
     },
-    {
+    ...(user.role === 'banking_employee' ? [{
       name: 'Churn Analysis',
       path: '/churn-analysis',
       icon: (
@@ -82,7 +82,7 @@ export default function Layout({ children, user, onLogout }: LayoutProps) {
       ),
       gradient: 'from-purple-500 to-pink-500',
       description: 'Customer Retention'
-    },
+    }] : []),
     ...(user.role === 'banking_user' ? [{
       name: 'Loan Request',
       path: '/loan-request',
