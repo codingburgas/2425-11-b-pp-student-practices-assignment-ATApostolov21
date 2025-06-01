@@ -464,11 +464,11 @@ export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
                   recentAnalyses.map((analysis, index) => (
                     <div
                       key={analysis.id}
-                      className="group flex items-center p-4 bg-gray-900/40 rounded-xl hover:bg-gray-900/60 transition-all duration-300 border border-gray-700/30 hover:border-purple-500/40"
+                      className="group flex items-center p-6 bg-gray-900/40 rounded-xl hover:bg-gray-900/60 transition-all duration-300 border border-gray-700/30 hover:border-purple-500/40"
                     >
                       {/* Icon */}
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mr-4 bg-purple-500/20 text-purple-400 group-hover:bg-purple-500/30 transition-colors">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="w-12 h-12 rounded-lg flex items-center justify-center mr-6 bg-purple-500/20 text-purple-400 group-hover:bg-purple-500/30 transition-colors">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                       </div>
@@ -479,60 +479,31 @@ export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
                         className="flex-1 flex items-center cursor-pointer"
                       >
                         <div className="flex-1">
-                          <div className="text-white font-medium group-hover:text-purple-300 transition-colors mb-1">
+                          <div className="text-lg text-white font-semibold group-hover:text-purple-300 transition-colors mb-2">
                             {analysis.name}
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-gray-400">
-                            <span>{analysis.total_customers.toLocaleString()} customers</span>
-                            <span className="text-red-400">{analysis.high_risk_customers} high risk</span>
-                            <span>{new Date(analysis.created_at).toLocaleDateString()}</span>
+                          <div className="flex items-center gap-6 text-sm">
+                            <span className="text-gray-400">{analysis.total_customers.toLocaleString()} customers</span>
+                            <span className="text-red-400 font-medium">{analysis.high_risk_customers} high risk</span>
+                            <span className="text-gray-500">{new Date(analysis.created_at).toLocaleDateString()}</span>
                           </div>
                         </div>
                         
                         {/* Risk Score */}
-                        <div className="text-right mr-3">
-                          <div className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors">
+                        <div className="text-right mr-6">
+                          <div className="text-2xl font-bold text-white group-hover:text-purple-300 transition-colors">
                             {(analysis.avg_churn_risk * 100).toFixed(1)}%
                           </div>
-                          <div className="text-xs text-gray-400">avg risk</div>
+                          <div className="text-sm text-gray-400">avg risk</div>
                         </div>
 
                         {/* Arrow */}
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity mr-3">
-                          <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
                         </div>
                       </Link>
-
-                      {/* Delete Button */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          deleteAnalysis(analysis.id, analysis.name)
-                        }}
-                        disabled={deletingAnalysisId === analysis.id}
-                        className="group/delete relative w-10 h-10 rounded-lg flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Delete Analysis"
-                      >
-                        {deletingAnalysisId === analysis.id ? (
-                          <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin"></div>
-                        ) : (
-                          <>
-                            {/* Floating particles on hover */}
-                            <div className="absolute inset-0 opacity-0 group-hover/delete:opacity-100 transition-opacity duration-300">
-                              <div className="absolute top-1 left-1 w-0.5 h-0.5 bg-red-400 rounded-full animate-ping"></div>
-                              <div className="absolute top-2 right-1 w-0.5 h-0.5 bg-red-300 rounded-full animate-ping delay-200"></div>
-                              <div className="absolute bottom-1 left-2 w-0.5 h-0.5 bg-red-400 rounded-full animate-ping delay-400"></div>
-                            </div>
-                            
-                            <svg className="w-4 h-4 text-red-400 group-hover/delete:text-red-300 group-hover/delete:animate-bounce transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </>
-                        )}
-                      </button>
                     </div>
                   ))
                 ) : (
