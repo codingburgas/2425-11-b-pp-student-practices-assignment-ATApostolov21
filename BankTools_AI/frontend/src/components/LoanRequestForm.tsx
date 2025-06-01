@@ -18,9 +18,23 @@ export default function LoanRequestForm() {
   const [isVisible, setIsVisible] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
   const [showResults, setShowResults] = useState(false)
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
     setIsVisible(true)
+  }, [])
+
+  // Mouse tracking for parallax effects
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({
+        x: (e.clientX / window.innerWidth) * 100,
+        y: (e.clientY / window.innerHeight) * 100
+      })
+    }
+    
+    window.addEventListener('mousemove', handleMouseMove)
+    return () => window.removeEventListener('mousemove', handleMouseMove)
   }, [])
 
   // Calculate comprehensive risk assessment
@@ -194,71 +208,50 @@ export default function LoanRequestForm() {
     }
   }
 
-  const testConnection = async () => {
-    try {
-      console.log('Testing API connection...')
-      const response = await fetch('http://localhost:5001/api/model-status', {
-        credentials: 'include'
-      })
-      const data = await response.json()
-      console.log('API connection test:', response.status, data)
-      
-      if (response.status === 401) {
-        setError('Not authenticated. Please log in first.')
-      } else if (response.ok) {
-        setError('API connection successful! Check console for details.')
-      } else {
-        setError(`API connection failed: ${response.status}`)
-      }
-    } catch (err) {
-      console.error('Connection test error:', err)
-      setError('Cannot connect to backend server. Please ensure it is running.')
-    }
-  }
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'purpose' ? value : Number(value)
+      [name]: name === 'amount' || name === 'income' || name === 'employment_years' || name === 'credit_score' 
+        ? parseFloat(value) || 0 
+        : value
     }))
   }
 
   const handleBackToForm = () => {
     setShowResults(false)
     setResult(null)
+    setError('')
   }
 
-  // If showing results, render the results page
   if (showResults && result) {
-    return <LoanApplicationResults result={result} onBack={handleBackToForm} />
+    return (
+      <LoanApplicationResults 
+        result={result} 
+        onBack={handleBackToForm}
+      />
+    )
   }
-
-  const loanPurposes = [
-    'Home Purchase',
-    'Home Refinance', 
-    'Car Purchase',
-    'Business Investment',
-    'Education',
-    'Personal/Other'
-  ]
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount)
   }
 
   const formatPercentage = (value: number) => {
-    return `${(value * 100).toFixed(1)}%`
+    return `${value.toFixed(1)}%`
   }
 
   const getImpactColor = (impact: 'Positive' | 'Neutral' | 'Negative') => {
     switch (impact) {
-      case 'Positive': return 'text-green-400 bg-green-500/20 border-green-500/30'
-      case 'Neutral': return 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30'
-      case 'Negative': return 'text-red-400 bg-red-500/20 border-red-500/30'
+      case 'Positive': return 'text-green-400'
+      case 'Neutral': return 'text-yellow-400'
+      case 'Negative': return 'text-red-400'
+      default: return 'text-gray-400'
     }
   }
 
@@ -267,497 +260,427 @@ export default function LoanRequestForm() {
     factor: any, 
     icon: React.ReactNode 
   }) => (
-    <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="group bg-gray-700/30 rounded-xl p-4 border border-gray-600/50 hover:border-gray-500/50 transition-all duration-300 hover:bg-gray-700/50">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center">
-          <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center mr-3">
-            {icon}
-          </div>
-          <h4 className="font-medium text-white">{title}</h4>
+          {icon}
+          <span className="text-sm font-medium text-gray-300 ml-2">{title}</span>
         </div>
-        <span className={`px-2 py-1 rounded-lg text-xs font-medium border ${getImpactColor(factor.impact)}`}>
+        <span className={`text-xs font-medium px-2 py-1 rounded-lg ${getImpactColor(factor.impact)} bg-gray-800/50`}>
           {factor.impact}
         </span>
       </div>
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-400">Rating:</span>
-          <span className="text-white font-medium">{factor.rating || factor.adequacy || factor.stability || factor.level}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-400">Weight:</span>
-          <span className="text-white font-medium">{factor.weight}%</span>
-        </div>
+      <div className="text-xs text-gray-400">
+        {title === 'Credit Score' && `${factor.score} - ${factor.rating}`}
+        {title === 'Income Level' && `${formatCurrency(factor.amount)} - ${factor.adequacy}`}
+        {title === 'Employment' && `${factor.years} years - ${factor.stability}`}
+        {title === 'Debt-to-Income' && `${formatPercentage(factor.ratio * 100)} - ${factor.level}`}
       </div>
     </div>
   )
 
+  const loanPurposes = [
+    'Home Purchase',
+    'Home Refinance',
+    'Auto Loan',
+    'Personal Loan',
+    'Business Loan',
+    'Education',
+    'Debt Consolidation',
+    'Personal/Other'
+  ]
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white py-8">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-green-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white relative overflow-hidden">
+      {/* Enhanced Background Effects */}
+      <div className="fixed inset-0 z-0">
+        {/* Primary gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900"></div>
+        
+        {/* Animated gradient orbs */}
+        <div 
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full blur-3xl animate-pulse"
+          style={{
+            transform: `translate(${mousePosition.x * 0.02}px, ${mousePosition.y * 0.02}px)`
+          }}
+        ></div>
+        <div 
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-full blur-3xl animate-pulse delay-1000"
+          style={{
+            transform: `translate(${-mousePosition.x * 0.02}px, ${-mousePosition.y * 0.02}px)`
+          }}
+        ></div>
+        <div 
+          className="absolute top-3/4 left-1/2 w-64 h-64 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-full blur-3xl animate-pulse delay-2000"
+          style={{
+            transform: `translate(${mousePosition.x * 0.01}px, ${mousePosition.y * 0.01}px)`
+          }}
+        ></div>
+        
+        {/* Animated grid pattern */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px',
+            animation: 'gridMove 20s linear infinite'
+          }}></div>
+        </div>
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6">
-        {/* Header */}
-        <div className={`text-center mb-12 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <div className="inline-flex items-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-3xl flex items-center justify-center mr-4 animate-float">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
+      <div className="relative z-10 max-w-7xl mx-auto p-6">
+        {/* Enhanced Header */}
+        <div className="text-center mb-12 relative">
+          {/* Floating decorative elements */}
+          <div className="absolute -top-10 left-1/4 w-20 h-20 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-xl animate-pulse"></div>
+          <div className="absolute -top-5 right-1/4 w-16 h-16 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-full blur-xl animate-pulse delay-1000"></div>
+          
+          <div className={`inline-flex items-center gap-4 mb-8 relative transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            {/* Enhanced icon with glow effect */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl blur-lg opacity-50 animate-pulse-glow"></div>
+              <div className="relative w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-2xl transform hover:scale-110 transition-all duration-500 hover:rotate-12">
+                <svg className="w-10 h-10 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
             </div>
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                AI-Powered Loan Application
-              </h1>
-              <p className="text-gray-400 text-lg mt-2">Get instant approval decisions with detailed AI analysis</p>
+            
+            {/* Enhanced title with gradient animation */}
+            <h1 className="text-6xl md:text-7xl font-bold gradient-text leading-tight">
+              AI-Powered Loan Application
+            </h1>
+          </div>
+          
+          {/* Enhanced subtitle with shimmer effect */}
+          <div className="relative">
+            <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+              Get instant approval decisions with detailed AI analysis and personalized recommendations
+            </p>
+            
+            {/* Decorative line with animation */}
+            <div className="mt-6 flex items-center justify-center">
+              <div className="h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent w-64 animate-shimmer"></div>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Form */}
+          {/* Enhanced Main Form */}
           <div className={`lg:col-span-2 transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <form onSubmit={handleSubmit} className="bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-8">
+            <div className="group relative bg-gradient-to-br from-gray-900/80 via-gray-800/60 to-gray-900/80 backdrop-blur-xl rounded-3xl p-8 border border-gray-700/50 hover:border-blue-500/40 transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl hover:shadow-blue-500/20 overflow-hidden">
+              {/* Animated background gradient */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-shimmer"></div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Loan Amount */}
-                <div className="group">
-                  <label htmlFor="amount" className="block text-sm font-medium text-gray-300 mb-2">
-                    Loan Amount
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <span className="text-gray-400 text-lg">$</span>
-                    </div>
-                    <input
-                      type="number"
-                      name="amount"
-                      id="amount"
-                      required
-                      min="1000"
-                      max="1000000"
-                      step="1000"
-                      value={formData.amount || ''}
-                      onChange={handleInputChange}
-                      className="block w-full pl-8 pr-4 py-4 bg-gray-900/50 border border-gray-600 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 group-hover:border-gray-500"
-                      placeholder="0"
-                    />
-                  </div>
-                  {formData.amount > 0 && (
-                    <p className="text-sm text-blue-400 mt-2">≈ {formatCurrency(formData.amount * 0.05)}/month estimated payment</p>
-                  )}
-                </div>
-
-                {/* Purpose */}
-                <div className="group">
-                  <label htmlFor="purpose" className="block text-sm font-medium text-gray-300 mb-2">
-                    Loan Purpose
-                  </label>
-                  <select
-                    name="purpose"
-                    id="purpose"
-                    required
-                    value={formData.purpose}
-                    onChange={handleInputChange}
-                    className="block w-full px-4 py-4 bg-gray-900/50 border border-gray-600 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 group-hover:border-gray-500"
-                  >
-                    <option value="">Select purpose</option>
-                    {loanPurposes.map((purpose) => (
-                      <option key={purpose} value={purpose} className="bg-gray-800">
-                        {purpose}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Annual Income */}
-                <div className="group">
-                  <label htmlFor="income" className="block text-sm font-medium text-gray-300 mb-2">
-                    Annual Income
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <span className="text-gray-400 text-lg">$</span>
-                    </div>
-                    <input
-                      type="number"
-                      name="income"
-                      id="income"
-                      required
-                      min="10000"
-                      step="1000"
-                      value={formData.income || ''}
-                      onChange={handleInputChange}
-                      className="block w-full pl-8 pr-4 py-4 bg-gray-900/50 border border-gray-600 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 group-hover:border-gray-500"
-                      placeholder="0"
-                    />
-                  </div>
-                  {formData.income > 0 && (
-                    <p className="text-sm text-blue-400 mt-2">≈ {formatCurrency(formData.income / 12)}/month gross income</p>
-                  )}
-                </div>
-
-                {/* Years Employed */}
-                <div className="group">
-                  <label htmlFor="employment_years" className="block text-sm font-medium text-gray-300 mb-2">
-                    Years Employed
-                  </label>
-                  <input
-                    type="number"
-                    name="employment_years"
-                    id="employment_years"
-                    required
-                    min="0"
-                    max="50"
-                    step="0.5"
-                    value={formData.employment_years || ''}
-                    onChange={handleInputChange}
-                    className="block w-full px-4 py-4 bg-gray-900/50 border border-gray-600 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 group-hover:border-gray-500"
-                    placeholder="0"
-                  />
-                </div>
-
-                {/* Credit Score */}
-                <div className="group md:col-span-2">
-                  <label htmlFor="credit_score" className="block text-sm font-medium text-gray-300 mb-2">
-                    Credit Score
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="credit_score"
-                      id="credit_score"
-                      min="300"
-                      max="850"
-                      required
-                      value={formData.credit_score || ''}
-                      onChange={handleInputChange}
-                      className="block w-full px-4 py-4 bg-gray-900/50 border border-gray-600 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 group-hover:border-gray-500"
-                      placeholder="300-850"
-                    />
-                    {formData.credit_score > 0 && (
-                      <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
-                        <span className={`text-sm font-medium px-3 py-1 rounded-lg ${
-                          formData.credit_score >= 750 ? 'bg-green-500/20 text-green-300' :
-                          formData.credit_score >= 700 ? 'bg-blue-500/20 text-blue-300' :
-                          formData.credit_score >= 650 ? 'bg-yellow-500/20 text-yellow-300' :
-                          'bg-red-500/20 text-red-300'
-                        }`}>
-                          {riskAssessment.creditScore.rating}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+              {/* Floating particles */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                <div className="absolute top-4 left-4 w-1 h-1 bg-blue-400 rounded-full animate-ping"></div>
+                <div className="absolute top-8 right-6 w-1 h-1 bg-purple-400 rounded-full animate-ping delay-300"></div>
+                <div className="absolute bottom-6 left-8 w-1 h-1 bg-green-400 rounded-full animate-ping delay-600"></div>
+                <div className="absolute bottom-4 right-4 w-1 h-1 bg-cyan-400 rounded-full animate-ping delay-900"></div>
               </div>
-
-              {/* Error Message */}
-              {error && (
-                <div className="mt-6 p-4 bg-red-500/20 border border-red-500/50 rounded-2xl">
-                  <div className="flex items-center">
-                    <svg className="w-5 h-5 text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              
+              <div className="relative z-10">
+                <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-4">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500/30 to-purple-500/30 rounded-xl flex items-center justify-center group-hover:rotate-12 transition-transform duration-500">
+                    <svg className="w-6 h-6 text-blue-400 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <span className="text-red-300">{error}</span>
                   </div>
-                </div>
-              )}
+                  <span className="gradient-text">Loan Application Form</span>
+                </h2>
 
-              {/* Submit Button */}
-              <div className="mt-8 flex justify-end space-x-4">
-                <button
-                  type="button"
-                  onClick={testConnection}
-                  className="px-6 py-3 bg-gray-700/50 hover:bg-gray-600/50 text-white font-medium rounded-xl border border-gray-600 hover:border-gray-500 transition-all duration-200"
-                >
-                  Test Connection
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="group relative inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-2xl text-white font-semibold transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  {isLoading ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Processing with AI...
-                    </>
-                  ) : (
-                    <>
-                      Submit Application
-                      <svg className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                      </svg>
-                    </>
+                <form onSubmit={handleSubmit}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Enhanced Loan Amount */}
+                    <div className="group/field">
+                      <label htmlFor="amount" className="block text-sm font-medium text-gray-300 mb-3">
+                        Loan Amount
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <span className="text-gray-400 text-lg">$</span>
+                        </div>
+                        <input
+                          type="number"
+                          name="amount"
+                          id="amount"
+                          required
+                          min="1000"
+                          max="1000000"
+                          step="1000"
+                          value={formData.amount || ''}
+                          onChange={handleInputChange}
+                          className="block w-full pl-8 pr-4 py-4 bg-gray-800/50 border border-gray-600 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all duration-300 text-lg backdrop-blur-sm group-hover/field:border-gray-500"
+                          placeholder="0"
+                        />
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                      </div>
+                      {formData.amount > 0 && (
+                        <p className="text-sm text-blue-400 mt-2">≈ {formatCurrency(formData.amount * 0.05)}/month estimated payment</p>
+                      )}
+                    </div>
+
+                    {/* Enhanced Purpose */}
+                    <div className="group/field">
+                      <label htmlFor="purpose" className="block text-sm font-medium text-gray-300 mb-3">
+                        Loan Purpose
+                      </label>
+                      <div className="relative">
+                        <select
+                          name="purpose"
+                          id="purpose"
+                          required
+                          value={formData.purpose}
+                          onChange={handleInputChange}
+                          className="block w-full px-4 py-4 bg-gray-800/50 border border-gray-600 rounded-2xl text-white focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all duration-300 text-lg backdrop-blur-sm group-hover/field:border-gray-500"
+                        >
+                          <option value="">Select purpose</option>
+                          {loanPurposes.map((purpose) => (
+                            <option key={purpose} value={purpose} className="bg-gray-800">
+                              {purpose}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                      </div>
+                    </div>
+
+                    {/* Enhanced Annual Income */}
+                    <div className="group/field">
+                      <label htmlFor="income" className="block text-sm font-medium text-gray-300 mb-3">
+                        Annual Income
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <span className="text-gray-400 text-lg">$</span>
+                        </div>
+                        <input
+                          type="number"
+                          name="income"
+                          id="income"
+                          required
+                          min="10000"
+                          step="1000"
+                          value={formData.income || ''}
+                          onChange={handleInputChange}
+                          className="block w-full pl-8 pr-4 py-4 bg-gray-800/50 border border-gray-600 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all duration-300 text-lg backdrop-blur-sm group-hover/field:border-gray-500"
+                          placeholder="0"
+                        />
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                      </div>
+                      {formData.income > 0 && (
+                        <p className="text-sm text-blue-400 mt-2">≈ {formatCurrency(formData.income / 12)}/month gross income</p>
+                      )}
+                    </div>
+
+                    {/* Enhanced Years Employed */}
+                    <div className="group/field">
+                      <label htmlFor="employment_years" className="block text-sm font-medium text-gray-300 mb-3">
+                        Years Employed
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          name="employment_years"
+                          id="employment_years"
+                          required
+                          min="0"
+                          max="50"
+                          step="0.5"
+                          value={formData.employment_years || ''}
+                          onChange={handleInputChange}
+                          className="block w-full px-4 py-4 bg-gray-800/50 border border-gray-600 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all duration-300 text-lg backdrop-blur-sm group-hover/field:border-gray-500"
+                          placeholder="0"
+                        />
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                      </div>
+                    </div>
+
+                    {/* Enhanced Credit Score */}
+                    <div className="group/field md:col-span-2">
+                      <label htmlFor="credit_score" className="block text-sm font-medium text-gray-300 mb-3">
+                        Credit Score
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          name="credit_score"
+                          id="credit_score"
+                          min="300"
+                          max="850"
+                          required
+                          value={formData.credit_score || ''}
+                          onChange={handleInputChange}
+                          className="block w-full px-4 py-4 bg-gray-800/50 border border-gray-600 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all duration-300 text-lg backdrop-blur-sm group-hover/field:border-gray-500"
+                          placeholder="300-850"
+                        />
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                        {formData.credit_score > 0 && (
+                          <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
+                            <span className={`text-sm font-medium px-3 py-1 rounded-lg ${
+                              formData.credit_score >= 750 ? 'bg-green-500/20 text-green-300' :
+                              formData.credit_score >= 700 ? 'bg-blue-500/20 text-blue-300' :
+                              formData.credit_score >= 650 ? 'bg-yellow-500/20 text-yellow-300' :
+                              'bg-red-500/20 text-red-300'
+                            }`}>
+                              {riskAssessment.creditScore.rating}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Enhanced Error Message */}
+                  {error && (
+                    <div className="mt-8 p-6 bg-gradient-to-r from-red-500/20 to-pink-500/20 border border-red-500/40 rounded-2xl backdrop-blur-sm animate-fade-in">
+                      <div className="flex items-center gap-4">
+                        <svg className="w-7 h-7 text-red-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="text-red-300 font-medium text-lg">{error}</p>
+                      </div>
+                    </div>
                   )}
-                </button>
+
+                  {/* Enhanced Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="group/submit w-full mt-10 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white py-5 rounded-2xl font-semibold transition-all duration-500 flex items-center justify-center gap-4 text-xl hover:scale-[1.02] transform shadow-2xl hover:shadow-blue-500/30 relative overflow-hidden"
+                  >
+                    {/* Button shimmer effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/submit:translate-x-full transition-transform duration-1000"></div>
+                    
+                    {isLoading ? (
+                      <>
+                        <div className="w-7 h-7 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span className="relative z-10">Processing with AI...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-7 h-7 group-hover/submit:animate-bounce relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span className="relative z-10">Submit AI Application</span>
+                      </>
+                    )}
+                  </button>
+                </form>
               </div>
-            </form>
+            </div>
           </div>
 
-          {/* Real-time Analysis Sidebar */}
+          {/* Enhanced Real-time Analysis Sidebar */}
           <div className={`transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            {/* Live Approval Prediction */}
+            {/* Enhanced Live Approval Prediction */}
             {(formData.credit_score > 0 && formData.income > 0) && (
-              <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6 mb-6">
-                <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  Live AI Prediction
-                </h3>
+              <div className="group relative bg-gradient-to-br from-gray-900/80 via-gray-800/60 to-gray-900/80 backdrop-blur-xl rounded-3xl p-6 mb-6 border border-gray-700/50 hover:border-green-500/40 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-green-500/20 overflow-hidden">
+                {/* Animated background gradient */}
+                <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 via-blue-500/5 to-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-shimmer"></div>
                 
-                <div className="text-center mb-6">
-                  <div className={`text-4xl font-bold mb-2 ${
-                    approvalProbability >= 70 ? 'text-green-400' :
-                    approvalProbability >= 40 ? 'text-yellow-400' :
-                    'text-red-400'
-                  }`}>
-                    {approvalProbability}%
+                <div className="relative z-10">
+                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                    <div className="w-8 h-8 bg-gradient-to-r from-green-500/30 to-blue-500/30 rounded-lg flex items-center justify-center mr-3 group-hover:rotate-12 transition-transform duration-500">
+                      <svg className="w-5 h-5 text-green-400 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <span className="gradient-text">Live AI Prediction</span>
+                  </h3>
+                  
+                  <div className="text-center mb-6">
+                    <div className={`text-4xl font-bold mb-2 ${
+                      approvalProbability >= 70 ? 'text-green-400' :
+                      approvalProbability >= 40 ? 'text-yellow-400' :
+                      'text-red-400'
+                    }`}>
+                      {approvalProbability}%
+                    </div>
+                    <p className="text-gray-400">Approval Probability</p>
                   </div>
-                  <p className="text-gray-400">Approval Probability</p>
-                </div>
 
-                <div className="w-full bg-gray-700/50 rounded-full h-4 mb-4">
-                  <div 
-                    className={`h-4 rounded-full transition-all duration-1000 ${
-                      approvalProbability >= 70 ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
-                      approvalProbability >= 40 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
-                      'bg-gradient-to-r from-red-500 to-pink-500'
-                    }`}
-                    style={{ width: `${approvalProbability}%` }}
-                  ></div>
-                </div>
+                  <div className="w-full bg-gray-700/50 rounded-full h-4 mb-4">
+                    <div 
+                      className={`h-4 rounded-full transition-all duration-1000 ${
+                        approvalProbability >= 70 ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
+                        approvalProbability >= 40 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
+                        'bg-gradient-to-r from-red-500 to-pink-500'
+                      }`}
+                      style={{ width: `${approvalProbability}%` }}
+                    ></div>
+                  </div>
 
-                <div className={`px-4 py-3 rounded-xl font-medium text-center ${
-                  approvalProbability >= 70 ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
-                  approvalProbability >= 40 ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
-                  'bg-red-500/20 text-red-300 border border-red-500/30'
-                }`}>
-                  {approvalProbability >= 70 ? 'Likely Approved' :
-                   approvalProbability >= 40 ? 'Under Review' :
-                   'Likely Declined'}
+                  <div className={`px-4 py-3 rounded-xl font-medium text-center ${
+                    approvalProbability >= 70 ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
+                    approvalProbability >= 40 ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
+                    'bg-red-500/20 text-red-300 border border-red-500/30'
+                  }`}>
+                    {approvalProbability >= 70 ? 'Likely Approved' :
+                     approvalProbability >= 40 ? 'Under Review' :
+                     'Likely Declined'}
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Risk Factors Analysis */}
+            {/* Enhanced Risk Factors Analysis */}
             {(formData.credit_score > 0 || formData.income > 0) && (
-              <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  Risk Assessment
-                </h3>
+              <div className="group relative bg-gradient-to-br from-gray-900/80 via-gray-800/60 to-gray-900/80 backdrop-blur-xl rounded-3xl p-6 border border-gray-700/50 hover:border-purple-500/40 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20 overflow-hidden">
+                {/* Animated background gradient */}
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-shimmer"></div>
+                
+                <div className="relative z-10">
+                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500/30 to-pink-500/30 rounded-lg flex items-center justify-center mr-3 group-hover:rotate-12 transition-transform duration-500">
+                      <svg className="w-5 h-5 text-purple-400 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <span className="gradient-text">Risk Assessment</span>
+                  </h3>
 
-                <div className="space-y-4">
-                  {formData.credit_score > 0 && (
-                    <RiskFactorCard
-                      title="Credit Score"
-                      factor={riskAssessment.creditScore}
-                      icon={<svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                    />
-                  )}
-                  
-                  {formData.income > 0 && (
-                    <RiskFactorCard
-                      title="Income Level"
-                      factor={riskAssessment.income}
-                      icon={<svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" /></svg>}
-                    />
-                  )}
-                  
-                  {formData.employment_years > 0 && (
-                    <RiskFactorCard
-                      title="Employment"
-                      factor={riskAssessment.employment}
-                      icon={<svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0v2a2 2 0 01-2 2H10a2 2 0 01-2-2V6" /></svg>}
-                    />
-                  )}
-                  
-                  {formData.amount > 0 && formData.income > 0 && (
-                    <RiskFactorCard
-                      title="Debt-to-Income"
-                      factor={riskAssessment.debtToIncome}
-                      icon={<svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>}
-                    />
-                  )}
+                  <div className="space-y-4">
+                    {formData.credit_score > 0 && (
+                      <RiskFactorCard
+                        title="Credit Score"
+                        factor={riskAssessment.creditScore}
+                        icon={<svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                      />
+                    )}
+                    
+                    {formData.income > 0 && (
+                      <RiskFactorCard
+                        title="Income Level"
+                        factor={riskAssessment.income}
+                        icon={<svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" /></svg>}
+                      />
+                    )}
+                    
+                    {formData.employment_years > 0 && (
+                      <RiskFactorCard
+                        title="Employment"
+                        factor={riskAssessment.employment}
+                        icon={<svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0v2a2 2 0 01-2 2H10a2 2 0 01-2-2V6" /></svg>}
+                      />
+                    )}
+                    
+                    {formData.amount > 0 && formData.income > 0 && (
+                      <RiskFactorCard
+                        title="Debt-to-Income"
+                        factor={riskAssessment.debtToIncome}
+                        icon={<svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>}
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             )}
           </div>
         </div>
-
-        {/* Debug Information */}
-        {import.meta.env.DEV && (
-          <div className="mt-8 p-4 bg-gray-800/30 rounded-xl border border-gray-700/50">
-            <h3 className="text-sm font-semibold text-gray-400 mb-2">Debug Information</h3>
-            <div className="text-xs text-gray-500 space-y-1">
-              <div>API Base URL: {import.meta.env.VITE_API_URL || 'http://localhost:5001'}</div>
-              <div>Endpoint: /user/loan-request</div>
-              <div>Form Data: {JSON.stringify(formData, null, 2)}</div>
-            </div>
-          </div>
-        )}
-
-        {/* Enhanced Results Display */}
-        {result && (
-          <div className={`mt-8 transition-all duration-1000 ${showResults ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <div className={`p-8 rounded-3xl border backdrop-blur-sm ${
-              result.prediction.approval_status === 'Approved' 
-                ? 'bg-green-500/10 border-green-500/30' 
-                : 'bg-red-500/10 border-red-500/30'
-            }`}>
-              
-              {/* Main Result Header */}
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center">
-                  <div className={`w-16 h-16 rounded-3xl flex items-center justify-center mr-6 ${
-                    result.prediction.approval_status === 'Approved' ? 'bg-green-500/20' : 'bg-red-500/20'
-                  }`}>
-                    {result.prediction.approval_status === 'Approved' ? (
-                      <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    ) : (
-                      <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    )}
-                  </div>
-                  <div>
-                    <h2 className={`text-3xl font-bold ${
-                      result.prediction.approval_status === 'Approved' ? 'text-green-400' : 'text-red-400'
-                    }`}>
-                      {result.prediction.approval_status === 'Approved' ? 'Loan Approved!' : 'Loan Declined'}
-                    </h2>
-                    <p className="text-gray-400 text-lg">
-                      AI Confidence: {result.prediction.confidence_level} • Method: {result.model_info.prediction_method === 'ai_model' ? 'AI Model' : 'Rule-based'}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="text-right">
-                  <div className={`text-4xl font-bold ${
-                    result.prediction.approval_status === 'Approved' ? 'text-green-400' : 'text-red-400'
-                  }`}>
-                    {(result.prediction.approval_probability * 100).toFixed(1)}%
-                  </div>
-                  <p className="text-gray-400">AI Probability</p>
-                </div>
-              </div>
-
-              {/* AI Analysis Details */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Model Information */}
-                <div className="bg-gray-800/30 rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                    AI Analysis Details
-                  </h3>
-                  
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Model Status:</span>
-                      <span className={`font-medium ${result.model_info.model_available ? 'text-green-400' : 'text-yellow-400'}`}>
-                        {result.model_info.model_available ? 'AI Model Active' : 'Fallback Mode'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Prediction Method:</span>
-                      <span className="text-white font-medium">
-                        {result.model_info.prediction_method === 'ai_model' ? 'Machine Learning' : 'Rule-based'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Confidence Level:</span>
-                      <span className={`font-medium ${
-                        result.prediction.confidence_level === 'High' ? 'text-green-400' :
-                        result.prediction.confidence_level === 'Medium' ? 'text-yellow-400' : 'text-red-400'
-                      }`}>
-                        {result.prediction.confidence_level}
-                      </span>
-                    </div>
-                    {result.request_id && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Request ID:</span>
-                        <span className="text-white font-medium">#{result.request_id}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* AI Recommendations */}
-                <div className="bg-gray-800/30 rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                    AI Recommendations
-                  </h3>
-                  
-                  <div className="space-y-3">
-                    {result.prediction.recommendations.map((recommendation, index) => (
-                      <div key={index} className="flex items-start">
-                        <div className="w-2 h-2 bg-purple-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                        <p className="text-gray-300 text-sm">{recommendation}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Next Steps */}
-              <div className="mt-8 p-6 bg-gray-800/30 rounded-2xl">
-                <h3 className="text-lg font-semibold text-white mb-4">Next Steps</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {result.prediction.approval_status === 'Approved' ? (
-                    <>
-                      <button className="flex items-center justify-center px-6 py-3 bg-green-500/20 border border-green-500/30 rounded-xl text-green-300 hover:bg-green-500/30 transition-colors">
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Review Loan Terms
-                      </button>
-                      <button className="flex items-center justify-center px-6 py-3 bg-blue-500/20 border border-blue-500/30 rounded-xl text-blue-300 hover:bg-blue-500/30 transition-colors">
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2v0M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-                        </svg>
-                        Upload Documents
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button className="flex items-center justify-center px-6 py-3 bg-yellow-500/20 border border-yellow-500/30 rounded-xl text-yellow-300 hover:bg-yellow-500/30 transition-colors">
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Improve Credit Score
-                      </button>
-                      <button className="flex items-center justify-center px-6 py-3 bg-purple-500/20 border border-purple-500/30 rounded-xl text-purple-300 hover:bg-purple-500/30 transition-colors">
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                        Contact Advisor
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

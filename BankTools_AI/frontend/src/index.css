@@ -350,3 +350,158 @@ body {
     @apply bg-gray-900 text-white;
   }
 }
+
+/* Enhanced animations and utilities */
+.gradient-text {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
+  background-size: 200% 200%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 3s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+@keyframes gridMove {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(50px, 50px); }
+}
+
+/* Enhanced form field focus effects */
+.group\/field:hover .group-hover\/field\:border-gray-500 {
+  border-color: rgb(107 114 128);
+}
+
+/* Enhanced button effects */
+.group\/submit:hover .group-hover\/submit\:translate-x-full {
+  transform: translateX(100%);
+}
+
+.group\/submit:hover .group-hover\/submit\:animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+/* Enhanced card hover effects */
+.group:hover .group-hover\:rotate-12 {
+  transform: rotate(12deg);
+}
+
+.group:hover .group-hover\:animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+.group:hover .group-hover\:scale-\[1\.01\] {
+  transform: scale(1.01);
+}
+
+.group:hover .group-hover\:scale-\[1\.02\] {
+  transform: scale(1.02);
+}
+
+/* Enhanced shadow effects */
+.hover\:shadow-blue-500\/20:hover {
+  box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.2);
+}
+
+.hover\:shadow-green-500\/20:hover {
+  box-shadow: 0 25px 50px -12px rgba(34, 197, 94, 0.2);
+}
+
+.hover\:shadow-purple-500\/20:hover {
+  box-shadow: 0 25px 50px -12px rgba(168, 85, 247, 0.2);
+}
+
+.hover\:shadow-blue-500\/30:hover {
+  box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.3);
+}
+
+/* Enhanced border effects */
+.hover\:border-blue-500\/40:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.hover\:border-green-500\/40:hover {
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.hover\:border-purple-500\/40:hover {
+  border-color: rgba(168, 85, 247, 0.4);
+}
+
+/* Enhanced background effects */
+.bg-gray-900\/80 {
+  background-color: rgba(17, 24, 39, 0.8);
+}
+
+.bg-gray-800\/60 {
+  background-color: rgba(31, 41, 55, 0.6);
+}
+
+/* Enhanced ring effects */
+.focus\:ring-blue-400\/30:focus {
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.3);
+}
+
+/* Enhanced text sizes */
+.text-6xl {
+  font-size: 3.75rem;
+  line-height: 1;
+}
+
+.text-7xl {
+  font-size: 4.5rem;
+  line-height: 1;
+}
+
+/* Enhanced spacing */
+.gap-4 {
+  gap: 1rem;
+}
+
+/* Enhanced border width */
+.border-3 {
+  border-width: 3px;
+}
