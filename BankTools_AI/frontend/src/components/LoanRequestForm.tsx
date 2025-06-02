@@ -3,9 +3,12 @@ import type { FormEvent } from 'react'
 import { banking } from '../api'
 import type { LoanRequest, LoanPredictionResponse, RiskAssessment } from '../types'
 import LoanApplicationResults from './LoanApplicationResults'
+import { useNavigate } from 'react-router-dom'
 
 export default function LoanRequestForm() {
+  const navigate = useNavigate()
   const [formData, setFormData] = useState<LoanRequest>({
+    name: '',
     amount: 0,
     purpose: '',
     income: 0,
@@ -151,7 +154,7 @@ export default function LoanRequestForm() {
     setResult(null)
 
     // Validate required fields
-    const requiredFields = ['amount', 'purpose', 'income', 'employment_years', 'credit_score']
+    const requiredFields = ['name', 'amount', 'purpose', 'income', 'employment_years', 'credit_score']
     const missingFields = requiredFields.filter(field => {
       const value = formData[field as keyof LoanRequest]
       return !value || (typeof value === 'number' && value <= 0) || (typeof value === 'string' && value.trim() === '')
@@ -168,24 +171,18 @@ export default function LoanRequestForm() {
       const response = await banking.submitLoanRequest(formData)
       console.log('Loan request response:', response.data)
       
-      // Save result to localStorage for persistence
-      const resultId = Date.now().toString()
-      localStorage.setItem(`loan_result_${resultId}`, JSON.stringify(response.data))
-      
-      // Save to loan applications history
-      const existingApplications = JSON.parse(localStorage.getItem('loan_applications') || '[]')
-      const newApplication = {
-        id: resultId,
-        ...formData,
-        result: response.data,
-        created_at: new Date().toISOString(),
-        status: response.data.prediction.approval_status
-      }
-      existingApplications.unshift(newApplication)
-      localStorage.setItem('loan_applications', JSON.stringify(existingApplications))
+      // No need to save to localStorage anymore - data is persisted in database
+      // and will be retrieved via the API when needed
       
       setResult(response.data)
       setShowResults(true)
+      if (response.data && response.data.id) {
+        navigate(`/loan-results/${response.data.id}`)
+      } else {
+        console.error('No application ID in response')
+        alert('Application submitted but could not retrieve details. Please check your dashboard.')
+        navigate('/loan-dashboard')
+      }
     } catch (err: any) {
       console.error('Loan request error:', err)
       console.error('Error response:', err.response)
@@ -394,10 +391,31 @@ export default function LoanRequestForm() {
 
                 <form onSubmit={handleSubmit}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Enhanced Application Name */}
+                    <div className="group/field md:col-span-2">
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-3">
+                        Application Name *
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          name="name"
+                          id="name"
+                          required
+                          value={formData.name || ''}
+                          onChange={handleInputChange}
+                          className="block w-full px-4 py-4 bg-gray-800/50 border border-gray-600 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all duration-300 text-lg backdrop-blur-sm group-hover/field:border-gray-500"
+                          placeholder="e.g., Home Purchase Loan, Car Financing, etc."
+                        />
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                      </div>
+                      <p className="text-sm text-gray-400 mt-2">Give your loan application a descriptive name for easy identification</p>
+                    </div>
+
                     {/* Enhanced Loan Amount */}
                     <div className="group/field">
                       <label htmlFor="amount" className="block text-sm font-medium text-gray-300 mb-3">
-                        Loan Amount
+                        Loan Amount *
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -576,57 +594,6 @@ export default function LoanRequestForm() {
 
           {/* Enhanced Real-time Analysis Sidebar */}
           <div className={`transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            {/* Enhanced Live Approval Prediction */}
-            {(formData.credit_score > 0 && formData.income > 0) && (
-              <div className="group relative bg-gradient-to-br from-gray-900/80 via-gray-800/60 to-gray-900/80 backdrop-blur-xl rounded-3xl p-6 mb-6 border border-gray-700/50 hover:border-green-500/40 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-green-500/20 overflow-hidden">
-                {/* Animated background gradient */}
-                <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 via-blue-500/5 to-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-shimmer"></div>
-                
-                <div className="relative z-10">
-                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                    <div className="w-8 h-8 bg-gradient-to-r from-green-500/30 to-blue-500/30 rounded-lg flex items-center justify-center mr-3 group-hover:rotate-12 transition-transform duration-500">
-                      <svg className="w-5 h-5 text-green-400 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
-                    </div>
-                    <span className="gradient-text">Live AI Prediction</span>
-                  </h3>
-                  
-                  <div className="text-center mb-6">
-                    <div className={`text-4xl font-bold mb-2 ${
-                      approvalProbability >= 70 ? 'text-green-400' :
-                      approvalProbability >= 40 ? 'text-yellow-400' :
-                      'text-red-400'
-                    }`}>
-                      {approvalProbability}%
-                    </div>
-                    <p className="text-gray-400">Approval Probability</p>
-                  </div>
-
-                  <div className="w-full bg-gray-700/50 rounded-full h-4 mb-4">
-                    <div 
-                      className={`h-4 rounded-full transition-all duration-1000 ${
-                        approvalProbability >= 70 ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
-                        approvalProbability >= 40 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
-                        'bg-gradient-to-r from-red-500 to-pink-500'
-                      }`}
-                      style={{ width: `${approvalProbability}%` }}
-                    ></div>
-                  </div>
-
-                  <div className={`px-4 py-3 rounded-xl font-medium text-center ${
-                    approvalProbability >= 70 ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
-                    approvalProbability >= 40 ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
-                    'bg-red-500/20 text-red-300 border border-red-500/30'
-                  }`}>
-                    {approvalProbability >= 70 ? 'Likely Approved' :
-                     approvalProbability >= 40 ? 'Under Review' :
-                     'Likely Declined'}
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Enhanced Risk Factors Analysis */}
             {(formData.credit_score > 0 || formData.income > 0) && (
               <div className="group relative bg-gradient-to-br from-gray-900/80 via-gray-800/60 to-gray-900/80 backdrop-blur-xl rounded-3xl p-6 border border-gray-700/50 hover:border-purple-500/40 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20 overflow-hidden">

@@ -93,4 +93,111 @@ def submit_loan_request():
     except Exception as e:
         current_app.logger.error(f"Error in loan request processing: {str(e)}")
         traceback.print_exc()
-        return jsonify({'error': 'Internal server error during loan request processing'}), 500 
+        return jsonify({'error': 'Internal server error during loan request processing'}), 500
+
+@bp.route('/loan-requests', methods=['GET'])
+@login_required
+def get_user_loan_requests():
+    """
+    Retrieve all loan requests for the authenticated user
+    Only banking users can access this endpoint and only their own data
+    """
+    if current_user.role != 'banking_user':
+        return jsonify({'error': 'Unauthorized access'}), 403
+    
+    try:
+        # Only get loan requests for the current user
+        loan_requests = LoanRequest.query.filter_by(user_id=current_user.id).order_by(LoanRequest.created_at.desc()).all()
+        
+        loans_data = []
+        for loan in loan_requests:
+            loans_data.append({
+                'id': loan.id,
+                'amount': loan.amount,
+                'purpose': loan.purpose,
+                'income': loan.income,
+                'employment_years': loan.employment_years,
+                'credit_score': loan.credit_score,
+                'prediction': loan.prediction,
+                'created_at': loan.created_at.isoformat(),
+                'status': loan.prediction.title() if loan.prediction else 'Pending'
+            })
+        
+        return jsonify({
+            'loan_requests': loans_data,
+            'total_count': len(loans_data)
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error fetching loan requests for user {current_user.id}: {str(e)}")
+        return jsonify({'error': 'Failed to fetch loan requests'}), 500
+
+@bp.route('/loan-request/<int:loan_id>', methods=['GET'])
+@login_required
+def get_loan_request_details(loan_id):
+    """
+    Retrieve details of a specific loan request
+    Only the owner can access their own loan request
+    """
+    if current_user.role != 'banking_user':
+        return jsonify({'error': 'Unauthorized access'}), 403
+    
+    try:
+        # Ensure user can only access their own loan requests
+        loan_request = LoanRequest.query.filter_by(id=loan_id, user_id=current_user.id).first()
+        
+        if not loan_request:
+            return jsonify({'error': 'Loan request not found or access denied'}), 404
+        
+        loan_data = {
+            'id': loan_request.id,
+            'amount': loan_request.amount,
+            'purpose': loan_request.purpose,
+            'income': loan_request.income,
+            'employment_years': loan_request.employment_years,
+            'credit_score': loan_request.credit_score,
+            'prediction': loan_request.prediction,
+            'created_at': loan_request.created_at.isoformat(),
+            'status': loan_request.prediction.title() if loan_request.prediction else 'Pending'
+        }
+        
+        return jsonify({'loan_request': loan_data})
+        
+    except Exception as e:
+        current_app.logger.error(f"Error fetching loan request {loan_id} for user {current_user.id}: {str(e)}")
+        return jsonify({'error': 'Failed to fetch loan request details'}), 500
+
+@bp.route('/loan-request/<int:loan_id>', methods=['DELETE'])
+@login_required
+def delete_loan_request(loan_id):
+    """
+    Delete a specific loan request
+    Only the owner can delete their own loan request
+    """
+    if current_user.role != 'banking_user':
+        return jsonify({'error': 'Unauthorized access'}), 403
+    
+    try:
+        # Ensure user can only delete their own loan requests
+        loan_request = LoanRequest.query.filter_by(id=loan_id, user_id=current_user.id).first()
+        
+        if not loan_request:
+            return jsonify({'error': 'Loan request not found or access denied'}), 404
+        
+        # Store loan details for response
+        loan_purpose = loan_request.purpose
+        loan_amount = loan_request.amount
+        
+        # Delete the loan request
+        db.session.delete(loan_request)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Loan request for {loan_purpose} (${loan_amount:,.2f}) has been successfully deleted'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting loan request {loan_id} for user {current_user.id}: {str(e)}")
+        return jsonify({'error': 'Failed to delete loan request'}), 500 

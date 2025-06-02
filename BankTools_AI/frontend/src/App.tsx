@@ -6,7 +6,9 @@ import LoginForm from './components/LoginForm'
 import RegisterForm from './components/RegisterForm'
 import LoanRequestForm from './components/LoanRequestForm'
 import LoanDashboard from './components/LoanDashboard'
+import EmployeeDashboard from './components/EmployeeDashboard'
 import LoanApplicationResults from './components/LoanApplicationResults'
+import LoanDetails from './components/LoanDetails'
 import ChurnAnalysisUpload from './components/ChurnAnalysisUpload'
 import OnboardingFlow from './components/OnboardingFlow'
 import ProfilePage from './components/ProfilePage'
@@ -26,7 +28,7 @@ function App() {
     console.log('Role type check:', typeof userData.role)
     console.log('Is banking_user?', userData.role === 'banking_user')
     console.log('Is banking_employee?', userData.role === 'banking_employee')
-    console.log('Dashboard choice: LoanDashboard for all users')
+    console.log('Dashboard choice:', userData.role === 'banking_employee' ? 'EmployeeDashboard' : 'LoanDashboard')
     console.log('==================================')
     
     setUser(userData)
@@ -71,10 +73,12 @@ function App() {
               <Routes>
                 <Route
                   path="/"
-                  element={<LoanDashboard user={user} />}
+                  element={user.role === 'banking_employee' ? <EmployeeDashboard user={user} /> : <LoanDashboard user={user} />}
                 />
                 <Route path="/loan-request" element={<LoanRequestForm />} />
                 <Route path="/loan-dashboard" element={<LoanDashboard user={user} />} />
+                <Route path="/loan-details/:id" element={<LoanDetails />} />
+                <Route path="/employee-dashboard" element={<EmployeeDashboard user={user} />} />
                 <Route path="/loan-results/:id" element={<LoanApplicationResults />} />
                 <Route path="/churn-analysis" element={<ChurnAnalysisUpload />} />
                 <Route path="/churn-analysis/:id" element={<ChurnAnalysisUpload />} />
@@ -106,7 +110,7 @@ function App() {
     console.log('Role type check:', typeof user.role)
     console.log('Is banking_user?', user.role === 'banking_user')
     console.log('Is banking_employee?', user.role === 'banking_employee')
-    console.log('Dashboard choice: LoanDashboard for all users')
+    console.log('Dashboard choice:', user.role === 'banking_employee' ? 'EmployeeDashboard' : 'LoanDashboard')
     console.log('==================================')
     
     return (
@@ -115,10 +119,12 @@ function App() {
           <Routes>
             <Route
               path="/"
-              element={<LoanDashboard user={user} />}
+              element={user.role === 'banking_employee' ? <EmployeeDashboard user={user} /> : <LoanDashboard user={user} />}
             />
             <Route path="/loan-request" element={<LoanRequestForm />} />
             <Route path="/loan-dashboard" element={<LoanDashboard user={user} />} />
+            <Route path="/loan-details/:id" element={<LoanDetails />} />
+            <Route path="/employee-dashboard" element={<EmployeeDashboard user={user} />} />
             <Route path="/loan-results/:id" element={<LoanApplicationResults />} />
             <Route path="/churn-analysis" element={<ChurnAnalysisUpload />} />
             <Route path="/churn-analysis/:id" element={<ChurnAnalysisUpload />} />

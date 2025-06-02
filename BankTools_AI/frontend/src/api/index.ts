@@ -39,6 +39,18 @@ export const banking = {
   submitAdvancedLoanRequest: (data: any) =>
     api.post(API_CONFIG.ENDPOINTS.AI_MODELS.PREDICT_LOAN, data),
   
+  // Get all loan requests for the authenticated user
+  getUserLoanRequests: () =>
+    api.get(API_CONFIG.ENDPOINTS.USER.LOAN_REQUESTS),
+  
+  // Get details of a specific loan request
+  getLoanRequestDetails: (loanId: number) =>
+    api.get(`${API_CONFIG.ENDPOINTS.USER.LOAN_REQUEST_DETAILS}/${loanId}`),
+  
+  // Delete a specific loan request
+  deleteLoanRequest: (loanId: number) =>
+    api.delete(`${API_CONFIG.ENDPOINTS.USER.DELETE_LOAN_REQUEST}/${loanId}`),
+  
   uploadChurnAnalysis: (file: File, analysisName: string) => {
     const formData = new FormData();
     formData.append('file', file);

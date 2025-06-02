@@ -5,6 +5,7 @@ export interface User {
 }
 
 export interface LoanRequest {
+  name?: string;
   amount: number;
   purpose: string;
   income: number;

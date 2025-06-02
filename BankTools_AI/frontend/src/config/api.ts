@@ -8,6 +8,9 @@ export const API_CONFIG = {
     },
     USER: {
       LOAN_REQUEST: '/user/loan-request',
+      LOAN_REQUESTS: '/user/loan-requests',
+      LOAN_REQUEST_DETAILS: '/user/loan-request',
+      DELETE_LOAN_REQUEST: '/user/loan-request',
     },
     AI_MODELS: {
       PREDICT_LOAN: '/api/predict-loan',
