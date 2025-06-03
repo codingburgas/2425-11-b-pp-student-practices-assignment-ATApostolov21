@@ -77,7 +77,7 @@ function App() {
                 />
                 <Route path="/loan-request" element={<LoanRequestForm />} />
                 <Route path="/loan-dashboard" element={<LoanDashboard user={user} />} />
-                <Route path="/loan-details/:id" element={<LoanDetails />} />
+                <Route path="/loan-details/:id" element={<LoanDetails user={user} />} />
                 <Route path="/employee-dashboard" element={<EmployeeDashboard user={user} />} />
                 <Route path="/loan-results/:id" element={<LoanApplicationResults />} />
                 <Route path="/churn-analysis" element={<ChurnAnalysisUpload />} />
@@ -123,7 +123,7 @@ function App() {
             />
             <Route path="/loan-request" element={<LoanRequestForm />} />
             <Route path="/loan-dashboard" element={<LoanDashboard user={user} />} />
-            <Route path="/loan-details/:id" element={<LoanDetails />} />
+            <Route path="/loan-details/:id" element={<LoanDetails user={user} />} />
             <Route path="/employee-dashboard" element={<EmployeeDashboard user={user} />} />
             <Route path="/loan-results/:id" element={<LoanApplicationResults />} />
             <Route path="/churn-analysis" element={<ChurnAnalysisUpload />} />

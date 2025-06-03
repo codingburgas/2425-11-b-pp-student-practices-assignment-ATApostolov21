@@ -44,12 +44,12 @@ export default function LoanDashboard({ user }: LoanDashboardProps) {
       return
     }
 
-    try {
+      try {
       setError(null)
       const response = await banking.getUserLoanRequests()
       const loanData = response.data.loan_requests || []
-      
-      // Transform the data to match our interface
+        
+        // Transform the data to match our interface
       const transformedApplications: LoanApplication[] = loanData.map((loan: any) => ({
         id: loan.id,
         amount: loan.amount,
@@ -60,17 +60,17 @@ export default function LoanDashboard({ user }: LoanDashboardProps) {
         status: loan.status || 'Pending',
         prediction: loan.prediction,
         created_at: loan.created_at
-      }))
+        }))
 
-      setApplications(transformedApplications)
-      
+        setApplications(transformedApplications)
+        
       // Calculate real statistics
-      const totalApps = transformedApplications.length
-      const approvedApps = transformedApplications.filter(app => app.status === 'Approved').length
+        const totalApps = transformedApplications.length
+        const approvedApps = transformedApplications.filter(app => app.status === 'Approved').length
       const avgRate = totalApps > 0 ? (approvedApps / totalApps) * 100 : 0
-      const totalAmount = transformedApplications
-        .filter(app => app.status === 'Approved')
-        .reduce((sum, app) => sum + app.amount, 0)
+        const totalAmount = transformedApplications
+          .filter(app => app.status === 'Approved')
+          .reduce((sum, app) => sum + app.amount, 0)
 
       // Animate statistics
       const animateStats = () => {
@@ -93,11 +93,11 @@ export default function LoanDashboard({ user }: LoanDashboardProps) {
           if (step >= steps) {
             clearInterval(timer)
             setAnimatedStats({
-              totalApplications: totalApps,
-              approvedApplications: approvedApps,
+          totalApplications: totalApps,
+          approvedApplications: approvedApps,
               avgApprovalRate: Math.floor(avgRate),
-              totalLoanAmount: totalAmount
-            })
+          totalLoanAmount: totalAmount
+        })
           }
         }, interval)
       }
@@ -106,7 +106,7 @@ export default function LoanDashboard({ user }: LoanDashboardProps) {
       setTimeout(animateStats, 500)
       
     } catch (error: any) {
-      console.error('Error loading loan applications:', error)
+        console.error('Error loading loan applications:', error)
       if (error.response?.status === 401) {
         setError('Please log in to view your loan applications.')
       } else if (error.response?.status === 403) {
@@ -115,9 +115,9 @@ export default function LoanDashboard({ user }: LoanDashboardProps) {
         setError('Failed to load loan applications. Please try again.')
       }
     } finally {
-      setIsLoading(false)
+        setIsLoading(false)
+      }
     }
-  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -226,14 +226,14 @@ export default function LoanDashboard({ user }: LoanDashboardProps) {
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-400">Loading your loan applications...</p>
         </div>
-      </div>
-    )
+    </div>
+  )
   }
 
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex items-center justify-center">
-        <div className="text-center">
+            <div className="text-center">
           <div className="w-24 h-24 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-12 h-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -264,24 +264,24 @@ export default function LoanDashboard({ user }: LoanDashboardProps) {
         {/* Header */}
         <div className={`mb-12 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <div className="flex items-center justify-between mb-6">
-            <div>
-              {user ? (
-                <>
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2">
-                    Welcome back, {user.email.split('@')[0]}
-                  </h1>
+              <div>
+                {user ? (
+                  <>
+                    <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2">
+                      Welcome back, {user.email.split('@')[0]}
+                    </h1>
                   <p className="text-gray-400 text-lg">
-                    Your intelligent loan dashboard is ready
-                  </p>
-                </>
-              ) : (
-                <>
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    Loan Dashboard
-                  </h1>
-                  <p className="text-gray-400 text-lg mt-2">Track your loan applications and AI insights</p>
-                </>
-              )}
+                      Your intelligent loan dashboard is ready
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                      Loan Dashboard
+                    </h1>
+                    <p className="text-gray-400 text-lg mt-2">Track your loan applications and AI insights</p>
+                  </>
+                )}
             </div>
             <div className="flex items-center space-x-4">
               {user && (
@@ -463,62 +463,62 @@ export default function LoanDashboard({ user }: LoanDashboardProps) {
 
         {/* Applications Table */}
         <div className={`transition-all duration-1000 delay-600 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white flex items-center">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mr-3">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                Loan Applications
-              </h2>
-              <div className="flex items-center gap-4">
-                <div className="text-sm text-gray-400">
-                  {applications.length} total applications
-                </div>
-                <button
-                  onClick={handleNewApplication}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-xl text-white font-medium transition-all duration-200 transform hover:scale-105 text-sm"
-                >
-                  + New Application
-                </button>
+        <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white flex items-center">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mr-3">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
               </div>
+              Loan Applications
+            </h2>
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-gray-400">
+                {applications.length} total applications
+              </div>
+              <button
+                onClick={handleNewApplication}
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-xl text-white font-medium transition-all duration-200 transform hover:scale-105 text-sm"
+              >
+                + New Application
+              </button>
             </div>
+          </div>
 
-            {applications.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="w-24 h-24 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-2xl font-semibold text-gray-400 mb-3">No Applications Yet</h3>
-                <p className="text-gray-500 mb-8 max-w-md mx-auto">Submit your first loan application to see it here. Our AI will provide instant analysis and approval decisions.</p>
-                <button
-                  onClick={handleNewApplication}
-                  className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-xl text-white font-medium transition-all duration-200 transform hover:scale-105 text-lg"
-                >
-                  Submit Your First Application
-                </button>
+          {applications.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-24 h-24 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
               </div>
-            ) : (
+              <h3 className="text-2xl font-semibold text-gray-400 mb-3">No Applications Yet</h3>
+              <p className="text-gray-500 mb-8 max-w-md mx-auto">Submit your first loan application to see it here. Our AI will provide instant analysis and approval decisions.</p>
+              <button
+                onClick={handleNewApplication}
+                className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-xl text-white font-medium transition-all duration-200 transform hover:scale-105 text-lg"
+              >
+                Submit Your First Application
+              </button>
+            </div>
+          ) : (
               <div className="space-y-4">
-                {applications.map((application, index) => (
+                      {applications.map((application, index) => (
                   <div key={application.id} className="group flex items-center p-6 bg-gray-900/40 rounded-xl hover:bg-gray-900/60 transition-all duration-300 border border-gray-700/30 hover:border-blue-500/40">
                     {/* Icon */}
                     <div className="w-12 h-12 rounded-lg flex items-center justify-center mr-6 bg-blue-500/20 text-blue-400 group-hover:bg-blue-500/30 transition-colors">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                    </div>
-                    
+                </div>
+
                     {/* Content */}
                     <div className="flex-1 flex items-center">
                       <div className="flex-1">
                         <div className="text-lg text-white font-semibold group-hover:text-blue-300 transition-colors mb-2">
                           {application.purpose} - {formatCurrency(application.amount)}
-                        </div>
+                          </div>
                         <div className="flex items-center gap-6 text-sm">
                           <span className="text-gray-400">Credit Score: {application.credit_score}</span>
                           <span className="text-gray-400">Income: {formatCurrency(application.income)}</span>
@@ -556,12 +556,12 @@ export default function LoanDashboard({ user }: LoanDashboardProps) {
                           )}
                         </button>
                       </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             )}
-          </div>
+            </div>
         </div>
 
         {/* AI Insights Section */}

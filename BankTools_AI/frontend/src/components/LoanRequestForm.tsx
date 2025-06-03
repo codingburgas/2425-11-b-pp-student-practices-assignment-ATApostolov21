@@ -176,8 +176,8 @@ export default function LoanRequestForm() {
       
       setResult(response.data)
       setShowResults(true)
-      if (response.data && response.data.id) {
-        navigate(`/loan-results/${response.data.id}`)
+      if (response.data && response.data.request_id) {
+        navigate(`/loan-results/${response.data.request_id}`)
       } else {
         console.error('No application ID in response')
         alert('Application submitted but could not retrieve details. Please check your dashboard.')

@@ -93,7 +93,7 @@ def submit_loan_request():
     except Exception as e:
         current_app.logger.error(f"Error in loan request processing: {str(e)}")
         traceback.print_exc()
-        return jsonify({'error': 'Internal server error during loan request processing'}), 500
+        return jsonify({'error': 'Internal server error during loan request processing'}), 500 
 
 @bp.route('/loan-requests', methods=['GET'])
 @login_required

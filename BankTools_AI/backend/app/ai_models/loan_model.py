@@ -133,13 +133,13 @@ class LoanPredictor:
         print("Loading loan datasets...")
         
         # Load training data
-        train_df = pd.read_csv(train_filepath)
+        train_df = pd.read_csv("/Users/apostolov31/Desktop/2425-11-b-pp-student-practices-assignment-ATApostolov21/BankTools_AI/datasets/Loan Approval Training Dataset.csv")
         print(f"Training dataset shape: {train_df.shape}")
         
         # Load test data if provided
         test_df = None
         if test_filepath and os.path.exists(test_filepath):
-            test_df = pd.read_csv(test_filepath)
+            test_df = pd.read_csv("/Users/apostolov31/Desktop/2425-11-b-pp-student-practices-assignment-ATApostolov21/BankTools_AI/datasets/Loan Prediction Dataset/test_Y3wMUE5_7gLdaTN.csv")
             print(f"Test dataset shape: {test_df.shape}")
         
         # Check target distribution in training data
