@@ -146,7 +146,7 @@ export default function LoanDashboard({ user }: LoanDashboardProps) {
   }
 
   const handleViewApplication = (application: LoanApplication) => {
-    navigate(`/loan-details/${application.id}`)
+    navigate(`/loan-results/${application.id}`)
   }
 
   const handleDeleteApplication = async (applicationId: number) => {

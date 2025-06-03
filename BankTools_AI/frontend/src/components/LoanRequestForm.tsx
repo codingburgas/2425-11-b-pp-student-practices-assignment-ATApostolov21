@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react'
 import type { FormEvent } from 'react'
 import { banking } from '../api'
 import type { LoanRequest, LoanPredictionResponse, RiskAssessment } from '../types'
-import LoanApplicationResults from './LoanApplicationResults'
 import { useNavigate } from 'react-router-dom'
 
 export default function LoanRequestForm() {
@@ -20,7 +19,6 @@ export default function LoanRequestForm() {
   const [error, setError] = useState('')
   const [isVisible, setIsVisible] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
-  const [showResults, setShowResults] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
@@ -175,7 +173,6 @@ export default function LoanRequestForm() {
       // and will be retrieved via the API when needed
       
       setResult(response.data)
-      setShowResults(true)
       if (response.data && response.data.request_id) {
         navigate(`/loan-results/${response.data.request_id}`)
       } else {
@@ -213,21 +210,6 @@ export default function LoanRequestForm() {
         ? parseFloat(value) || 0 
         : value
     }))
-  }
-
-  const handleBackToForm = () => {
-    setShowResults(false)
-    setResult(null)
-    setError('')
-  }
-
-  if (showResults && result) {
-    return (
-      <LoanApplicationResults 
-        result={result} 
-        onBack={handleBackToForm}
-      />
-    )
   }
 
   const formatCurrency = (amount: number) => {

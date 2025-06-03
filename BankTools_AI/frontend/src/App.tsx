@@ -6,10 +6,10 @@ import LoginForm from './components/LoginForm'
 import RegisterForm from './components/RegisterForm'
 import LoanRequestForm from './components/LoanRequestForm'
 import LoanDashboard from './components/LoanDashboard'
-import EmployeeDashboard from './components/EmployeeDashboard'
+import EmployeeDashboard from './components/Dashboards/EmployeeDashboard'
 import LoanApplicationResults from './components/LoanApplicationResults'
 import LoanDetails from './components/LoanDetails'
-import ChurnAnalysisUpload from './components/ChurnAnalysisUpload'
+import ChurnAnalysisUpload from './components/ChurnAnalytics/ChurnAnalysisUpload'
 import OnboardingFlow from './components/OnboardingFlow'
 import ProfilePage from './components/ProfilePage'
 import SettingsPage from './components/SettingsPage'
@@ -79,7 +79,7 @@ function App() {
                 <Route path="/loan-dashboard" element={<LoanDashboard user={user} />} />
                 <Route path="/loan-details/:id" element={<LoanDetails user={user} />} />
                 <Route path="/employee-dashboard" element={<EmployeeDashboard user={user} />} />
-                <Route path="/loan-results/:id" element={<LoanApplicationResults />} />
+                <Route path="/loan-results/:id" element={<LoanApplicationResults user={user} />} />
                 <Route path="/churn-analysis" element={<ChurnAnalysisUpload />} />
                 <Route path="/churn-analysis/:id" element={<ChurnAnalysisUpload />} />
                 <Route path="/profile" element={<ProfilePage user={user} onUpdateProfile={handleUpdateProfile} />} />
@@ -125,7 +125,7 @@ function App() {
             <Route path="/loan-dashboard" element={<LoanDashboard user={user} />} />
             <Route path="/loan-details/:id" element={<LoanDetails user={user} />} />
             <Route path="/employee-dashboard" element={<EmployeeDashboard user={user} />} />
-            <Route path="/loan-results/:id" element={<LoanApplicationResults />} />
+            <Route path="/loan-results/:id" element={<LoanApplicationResults user={user} />} />
             <Route path="/churn-analysis" element={<ChurnAnalysisUpload />} />
             <Route path="/churn-analysis/:id" element={<ChurnAnalysisUpload />} />
             <Route path="/profile" element={<ProfilePage user={user} onUpdateProfile={handleUpdateProfile} />} />

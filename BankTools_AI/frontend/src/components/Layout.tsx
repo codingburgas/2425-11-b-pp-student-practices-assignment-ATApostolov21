@@ -62,16 +62,20 @@ export default function Layout({ children, user, onLogout }: LayoutProps) {
 
   const navigationItems = [
     {
-      name: 'Loan Dashboard',
+      name: user.role === 'banking_employee' ? 'Employee Dashboard' : 'Loan Dashboard',
       path: '/',
-      icon: (
+      icon: user.role === 'banking_employee' ? (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      ) : (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
         </svg>
       ),
-      gradient: 'from-blue-500 to-cyan-500',
-      description: 'Loan Applications & AI Insights'
+      gradient: user.role === 'banking_employee' ? 'from-green-500 to-emerald-500' : 'from-blue-500 to-cyan-500',
+      description: user.role === 'banking_employee' ? 'Analytics & AI Insights' : 'Loan Applications & AI Insights'
     },
     ...(user.role === 'banking_employee' ? [{
       name: 'Churn Analysis',
