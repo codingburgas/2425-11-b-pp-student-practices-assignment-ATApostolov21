@@ -30,6 +30,31 @@ export const auth = {
   logout: () => api.post(API_CONFIG.ENDPOINTS.AUTH.LOGOUT),
 };
 
+export const user = {
+  profile: () => api.get(API_CONFIG.ENDPOINTS.USER.PROFILE),
+  
+  updateEmail: (email: string) =>
+    api.put(API_CONFIG.ENDPOINTS.USER.UPDATE_EMAIL, { email }),
+  
+  updatePassword: (currentPassword: string, newPassword: string, confirmPassword: string) =>
+    api.put(API_CONFIG.ENDPOINTS.USER.UPDATE_PASSWORD, { 
+      currentPassword, 
+      newPassword, 
+      confirmPassword 
+    }),
+
+  submitLoanRequest: (loanData: Omit<LoanRequest, 'id' | 'userId' | 'status' | 'createdAt'>) =>
+    api.post(API_CONFIG.ENDPOINTS.USER.LOAN_REQUEST, loanData),
+
+  getLoanRequests: () => api.get(API_CONFIG.ENDPOINTS.USER.LOAN_REQUESTS),
+
+  getLoanRequestDetails: (id: number) =>
+    api.get(`${API_CONFIG.ENDPOINTS.USER.LOAN_REQUEST_DETAILS}/${id}`),
+
+  deleteLoanRequest: (id: number) =>
+    api.delete(`${API_CONFIG.ENDPOINTS.USER.DELETE_LOAN_REQUEST}/${id}`),
+};
+
 export const banking = {
   // Use the user endpoint that handles simple form data and includes mapping logic
   submitLoanRequest: (data: LoanRequest) =>

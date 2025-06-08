@@ -2,8 +2,8 @@ from flask import jsonify, request, current_app
 from flask_login import login_required, current_user
 from app import db
 from app.user import bp
-from app.models import LoanRequest
-from app.ai_models.loan_utils import (
+from app.models import LoanRequest, User
+from app.ai_models.loan.loan_utils import (
     validate_frontend_loan_data, 
     predict_loan_approval,
     format_prediction_response
@@ -48,16 +48,96 @@ def map_form_data_to_model_format(form_data):
 @login_required
 def profile():
     """Get user profile information"""
-    if current_user.role != 'banking_user':
-        return jsonify({'error': 'Unauthorized access'}), 403
-    
     return jsonify({
         'id': current_user.id,
-        'username': current_user.username,
         'email': current_user.email,
         'role': current_user.role,
-        'created_at': current_user.created_at.isoformat() if current_user.created_at else None
+        'created_at': current_user.created_at.isoformat() if current_user.created_at else None,
+        'is_verified': current_user.is_verified,
+        'auth_provider': getattr(current_user, 'auth_provider', 'local')
     })
+
+@bp.route('/update-email', methods=['PUT'])
+@login_required
+def update_email():
+    """Update user email address"""
+    try:
+        data = request.get_json()
+        new_email = data.get('email', '').strip().lower()
+        
+        if not new_email:
+            return jsonify({'error': 'Email is required'}), 400
+        
+        # Basic email validation
+        if '@' not in new_email or '.' not in new_email:
+            return jsonify({'error': 'Invalid email format'}), 400
+        
+        # Check if email is already taken by another user
+        existing_user = User.query.filter_by(email=new_email).first()
+        if existing_user and existing_user.id != current_user.id:
+            return jsonify({'error': 'Email already in use by another account'}), 400
+        
+        # Update email
+        current_user.email = new_email
+        current_user.is_verified = False  # Reset verification status
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Email updated successfully',
+            'user': {
+                'id': current_user.id,
+                'email': current_user.email,
+                'role': current_user.role,
+                'is_verified': current_user.is_verified
+            }
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error updating email for user {current_user.id}: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to update email'}), 500
+
+@bp.route('/update-password', methods=['PUT'])
+@login_required
+def update_password():
+    """Update user password"""
+    try:
+        data = request.get_json()
+        current_password = data.get('currentPassword', '')
+        new_password = data.get('newPassword', '')
+        confirm_password = data.get('confirmPassword', '')
+        
+        # Validate input
+        if not current_password:
+            return jsonify({'error': 'Current password is required'}), 400
+        
+        if not new_password:
+            return jsonify({'error': 'New password is required'}), 400
+        
+        if len(new_password) < 6:
+            return jsonify({'error': 'New password must be at least 6 characters long'}), 400
+        
+        if new_password != confirm_password:
+            return jsonify({'error': 'New passwords do not match'}), 400
+        
+        # Check if user uses password authentication (not Google OAuth only)
+        if not current_user.password_hash:
+            return jsonify({'error': 'Password change not available for OAuth accounts'}), 400
+        
+        # Verify current password
+        if not current_user.check_password(current_password):
+            return jsonify({'error': 'Current password is incorrect'}), 400
+        
+        # Update password
+        current_user.set_password(new_password)
+        db.session.commit()
+        
+        return jsonify({'message': 'Password updated successfully'})
+        
+    except Exception as e:
+        current_app.logger.error(f"Error updating password for user {current_user.id}: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to update password'}), 500
 
 @bp.route('/loan-requests')
 @login_required

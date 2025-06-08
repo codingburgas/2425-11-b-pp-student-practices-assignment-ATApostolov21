@@ -7,6 +7,9 @@ export const API_CONFIG = {
       LOGOUT: '/api/auth/logout',
     },
     USER: {
+      PROFILE: '/api/user/profile',
+      UPDATE_EMAIL: '/api/user/update-email',
+      UPDATE_PASSWORD: '/api/user/update-password',
       LOAN_REQUEST: '/api/user/loan-request',
       LOAN_REQUESTS: '/api/user/loan-requests',
       LOAN_REQUEST_DETAILS: '/api/user/loan-request',

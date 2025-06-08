@@ -6,7 +6,7 @@ Handles frontend form data and provides prediction services
 import os
 import traceback
 from typing import Dict, Any, Optional, Tuple
-from .loan_model import LoanPredictor
+from .loan_model_clean import LoanPredictor
 
 # Global model instance
 _loan_predictor = None

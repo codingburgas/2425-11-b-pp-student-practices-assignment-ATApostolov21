@@ -7,9 +7,9 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 import os
 import traceback
-from .churn_model import ChurnPredictor
-from .loan_model import LoanPredictor
-from .loan_utils import (
+from .churn.churn_model_clean import ChurnPredictor
+from .loan.loan_model_clean import LoanPredictor
+from .loan.loan_utils import (
     validate_frontend_loan_data,
     predict_loan_approval,
     format_prediction_response
