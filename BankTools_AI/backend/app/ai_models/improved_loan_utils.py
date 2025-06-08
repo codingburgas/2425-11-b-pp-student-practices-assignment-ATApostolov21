@@ -1,15 +1,15 @@
 """
-Utility functions for the loan approval model
+Utility functions for the improved loan approval model
 Handles frontend form data and provides prediction services
 """
 
 import os
 import traceback
 from typing import Dict, Any, Optional, Tuple
-from .loan_model import LoanPredictor
+from .improved_loan_model import ImprovedLoanPredictor
 
 # Global model instance
-_loan_predictor = None
+_improved_loan_predictor = None
 
 def _safe_log(message: str, level: str = 'info'):
     """Safe logging that works with or without Flask context"""
@@ -24,13 +24,13 @@ def _safe_log(message: str, level: str = 'info'):
     except (ImportError, RuntimeError):
         print(f"[{level.upper()}] {message}")
 
-def get_loan_predictor():
-    """Get the loan predictor instance, loading it if necessary"""
-    global _loan_predictor
+def get_improved_loan_predictor():
+    """Get the improved loan predictor instance, loading it if necessary"""
+    global _improved_loan_predictor
     
     # If we have a cached instance, use it
-    if _loan_predictor and _loan_predictor.is_trained:
-        return _loan_predictor
+    if _improved_loan_predictor and _improved_loan_predictor.is_trained:
+        return _improved_loan_predictor
     
     # Load the model directly
     try:
@@ -46,18 +46,18 @@ def get_loan_predictor():
             backend_dir = os.path.dirname(os.path.dirname(current_dir))
             models_dir = os.path.join(backend_dir, 'models')
         
-        model_path = os.path.join(models_dir, 'loan_model.joblib')
+        model_path = os.path.join(models_dir, 'improved_loan_model.joblib')
         
         if os.path.exists(model_path):
-            _loan_predictor = LoanPredictor()
-            _loan_predictor.load_model(model_path)
-            _safe_log(f"Loan model loaded from {model_path}", 'info')
-            return _loan_predictor
+            _improved_loan_predictor = ImprovedLoanPredictor()
+            _improved_loan_predictor.load_model(model_path)
+            _safe_log(f"Improved loan model loaded from {model_path}", 'info')
+            return _improved_loan_predictor
         else:
-            _safe_log(f"Loan model file not found at {model_path}", 'warning')
+            _safe_log(f"Improved loan model file not found at {model_path}", 'warning')
             
     except Exception as e:
-        _safe_log(f"Error loading loan model: {str(e)}", 'error')
+        _safe_log(f"Error loading improved loan model: {str(e)}", 'error')
         traceback.print_exc()
     
     return None
@@ -109,9 +109,9 @@ def validate_frontend_loan_data(data: Dict[str, Any]) -> Tuple[bool, Optional[st
     
     return True, None
 
-def predict_loan_approval(application_data: Dict[str, Any]) -> Dict[str, Any]:
+def predict_loan_approval_improved(application_data: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Predict loan approval using the AI model
+    Predict loan approval using the improved model
     
     Args:
         application_data: Frontend form data with keys:
@@ -125,8 +125,8 @@ def predict_loan_approval(application_data: Dict[str, Any]) -> Dict[str, Any]:
         Prediction result dictionary
     """
     try:
-        # Get the model
-        predictor = get_loan_predictor()
+        # Get the improved model
+        predictor = get_improved_loan_predictor()
         
         if predictor and predictor.is_trained:
             try:
@@ -141,27 +141,27 @@ def predict_loan_approval(application_data: Dict[str, Any]) -> Dict[str, Any]:
                         'prediction_method': 'validation_error'
                     }
                 
-                # Use the AI model for prediction
+                # Use the improved model for prediction
                 result = predictor.predict(application_data)
-                result['prediction_method'] = 'ai_model'
+                result['prediction_method'] = 'improved_ai_model'
                 
-                _safe_log(f"AI model prediction: {result['approval_status']} "
+                _safe_log(f"Improved AI model prediction: {result['approval_status']} "
                          f"(probability: {result['approval_probability']:.3f})", 'info')
                 
                 return result
                 
             except Exception as e:
-                _safe_log(f"Error using AI model: {str(e)}", 'error')
+                _safe_log(f"Error using improved AI model: {str(e)}", 'error')
                 traceback.print_exc()
                 # Fall through to fallback prediction
         else:
-            _safe_log("AI model not available, using fallback prediction", 'warning')
+            _safe_log("Improved AI model not available, using fallback prediction", 'warning')
         
         # Fallback to rule-based prediction
         return rule_based_prediction_frontend(application_data)
         
     except Exception as e:
-        _safe_log(f"Error in loan prediction: {str(e)}", 'error')
+        _safe_log(f"Error in improved loan prediction: {str(e)}", 'error')
         traceback.print_exc()
         return {
             'approval_status': 'Rejected',
@@ -328,12 +328,12 @@ def rule_based_prediction_frontend(data: Dict[str, Any]) -> Dict[str, Any]:
             'prediction_method': 'error_fallback'
         }
 
-def format_prediction_response(prediction: Dict[str, Any], request_id: Optional[int] = None) -> Dict[str, Any]:
+def format_improved_prediction_response(prediction: Dict[str, Any], request_id: Optional[int] = None) -> Dict[str, Any]:
     """
     Format prediction response for API consistency
     
     Args:
-        prediction: Raw prediction result from model
+        prediction: Raw prediction result from improved model
         request_id: Optional request ID for tracking
         
     Returns:
@@ -349,7 +349,7 @@ def format_prediction_response(prediction: Dict[str, Any], request_id: Optional[
         },
         'model_info': {
             'prediction_method': prediction.get('prediction_method', 'unknown'),
-            'model_available': prediction.get('prediction_method') == 'ai_model',
+            'model_available': prediction.get('prediction_method') == 'improved_ai_model',
             'selected_features': prediction.get('selected_features_used', []),
             'model_type': prediction.get('model_type', 'Unknown')
         }
@@ -377,21 +377,21 @@ def predict_loan_approval_unified(application_data: Dict[str, Any], use_simple_f
         Prediction result
     """
     if use_simple_format:
-        # Use the model for frontend data
-        return predict_loan_approval(application_data)
+        # Use the improved model for frontend data
+        return predict_loan_approval_improved(application_data)
     else:
         # For backward compatibility with old format, try to convert
         # This handles the old model format with Gender, Married, etc.
         try:
-            # Try to use the model anyway
-            predictor = get_loan_predictor()
+            # Try to use the improved model anyway
+            predictor = get_improved_loan_predictor()
             if predictor and predictor.is_trained:
-                # The model can handle both formats
+                # The improved model can handle both formats
                 result = predictor.predict(application_data)
-                result['prediction_method'] = 'ai_model_legacy'
+                result['prediction_method'] = 'improved_ai_model_legacy'
                 return result
         except Exception as e:
-            _safe_log(f"Error using model with legacy format: {str(e)}", 'warning')
+            _safe_log(f"Error using improved model with legacy format: {str(e)}", 'warning')
         
         # Fallback to rule-based for legacy format
         return rule_based_prediction_frontend(application_data) 

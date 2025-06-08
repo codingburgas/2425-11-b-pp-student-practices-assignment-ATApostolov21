@@ -10,7 +10,7 @@ import traceback
 from .churn_model import ChurnPredictor
 from .loan_model import LoanPredictor
 from .loan_utils import (
-    validate_loan_application_data,
+    validate_frontend_loan_data,
     predict_loan_approval,
     format_prediction_response
 )
@@ -132,20 +132,14 @@ def predict_churn():
 @login_required
 def predict_loan():
     """
-    Predict loan approval probability using unified prediction system
-    Expected JSON format:
+    Predict loan approval probability using prediction system
+    Expected JSON format (frontend format):
     {
-        "Gender": "Male",
-        "Married": "Yes",
-        "Dependents": 1,
-        "Education": "Graduate",
-        "Self_Employed": "No",
-        "ApplicantIncome": 5000,
-        "CoapplicantIncome": 2000,
-        "LoanAmount": 150,
-        "Loan_Amount_Term": 360,
-        "Credit_History": 1,
-        "Property_Area": "Urban"
+        "amount": 150000,
+        "purpose": "Home Purchase",
+        "income": 75000,
+        "employment_years": 5,
+        "credit_score": 720
     }
     """
     try:
@@ -159,22 +153,18 @@ def predict_loan():
         # Get applicant data from request
         applicant_data = request.get_json()
         
-        # Validate input data
-        required_fields = ['Gender', 'Married', 'Dependents', 'Education', 'Self_Employed',
-                          'ApplicantIncome', 'CoapplicantIncome', 'LoanAmount', 
-                          'Loan_Amount_Term', 'Credit_History', 'Property_Area']
-        
-        is_valid, error_message = validate_loan_application_data(applicant_data, required_fields)
+        # Validate input data using validation
+        is_valid, error_message = validate_frontend_loan_data(applicant_data)
         if not is_valid:
             return jsonify({
                 'success': False,
                 'error': error_message
             }), 400
         
-        # Use unified prediction system (no format conversion needed for full model data)
-        prediction_result = predict_loan_approval(applicant_data, use_simple_format=False)
+        # Use prediction system
+        prediction_result = predict_loan_approval(applicant_data)
         
-        # Format response
+        # Format response using formatter
         response = format_prediction_response(prediction_result)
         response['applicant_data'] = applicant_data
         
@@ -199,11 +189,12 @@ def model_status():
         status = {
             'churn_model': {
                 'loaded': churn_predictor is not None and churn_predictor.is_trained,
-                'accessible': current_user.role == 'banking_employee'
+                'type': 'ChurnPredictor' if churn_predictor else None
             },
             'loan_model': {
                 'loaded': loan_predictor is not None and loan_predictor.is_trained,
-                'accessible': current_user.role == 'banking_user'
+                'type': 'LoanPredictor' if loan_predictor else None,
+                'selected_features': loan_predictor.selected_features if loan_predictor and loan_predictor.is_trained else None
             }
         }
         

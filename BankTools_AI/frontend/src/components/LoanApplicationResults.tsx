@@ -149,8 +149,8 @@ export default function LoanApplicationResults({ user }: LoanApplicationResultsP
       recommendations.push('Consider applying for a smaller loan amount or increasing your income before applying')
     } else if (incomeToLoanRatio < 2) {
       recommendations.push('Your income-to-loan ratio is adequate but could be improved for better terms')
-    }
-    
+  }
+
     // Employment recommendations
     if (employment_years < 2) {
       recommendations.push('Consider waiting until you have more employment history for better approval chances')

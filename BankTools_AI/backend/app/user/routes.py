@@ -4,7 +4,7 @@ from app import db
 from app.user import bp
 from app.models import LoanRequest
 from app.ai_models.loan_utils import (
-    validate_loan_application_data, 
+    validate_frontend_loan_data, 
     predict_loan_approval,
     format_prediction_response
 )
@@ -44,12 +44,69 @@ def map_form_data_to_model_format(form_data):
     
     return model_data
 
+@bp.route('/profile')
+@login_required
+def profile():
+    """Get user profile information"""
+    if current_user.role != 'banking_user':
+        return jsonify({'error': 'Unauthorized access'}), 403
+    
+    return jsonify({
+        'id': current_user.id,
+        'username': current_user.username,
+        'email': current_user.email,
+        'role': current_user.role,
+        'created_at': current_user.created_at.isoformat() if current_user.created_at else None
+    })
+
+@bp.route('/loan-requests')
+@login_required
+def get_loan_requests():
+    """Get user's loan request history"""
+    if current_user.role != 'banking_user':
+        return jsonify({'error': 'Unauthorized access'}), 403
+    
+    try:
+        loan_requests = LoanRequest.query.filter_by(user_id=current_user.id).order_by(LoanRequest.created_at.desc()).all()
+        
+        requests_data = []
+        for req in loan_requests:
+            # Convert prediction to proper status
+            status = 'Pending'  # Default status
+            if req.prediction:
+                prediction_lower = req.prediction.lower().strip()
+                if prediction_lower == 'approved':
+                    status = 'Approved'
+                elif prediction_lower == 'rejected':
+                    status = 'Rejected'
+                else:
+                    # Handle any other prediction values by capitalizing them
+                    status = req.prediction.title()
+            
+            requests_data.append({
+                'id': req.id,
+                'amount': req.amount,
+                'purpose': req.purpose,
+                'income': req.income,
+                'employment_years': req.employment_years,
+                'credit_score': req.credit_score,
+                'prediction': req.prediction,
+                'status': status,
+                'created_at': req.created_at.isoformat() if req.created_at else None
+            })
+        
+        return jsonify({'loan_requests': requests_data})
+        
+    except Exception as e:
+        current_app.logger.error(f"Error fetching loan requests: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 @bp.route('/loan-request', methods=['POST'])
 @login_required
 def submit_loan_request():
     """
-    Submit a loan request using the unified AI prediction system
-    This endpoint now uses the real AI model with fallback to rule-based prediction
+    Submit a loan request using the AI prediction system
+    This endpoint now uses the new model with SelectKBest feature selection
     """
     if current_user.role != 'banking_user':
         return jsonify({'error': 'Unauthorized access'}), 403
@@ -57,15 +114,14 @@ def submit_loan_request():
     try:
         data = request.get_json()
         
-        # Validate input data
-        required_fields = ['amount', 'purpose', 'income', 'employment_years', 'credit_score']
-        is_valid, error_message = validate_loan_application_data(data, required_fields)
+        # Validate input data using validation
+        is_valid, error_message = validate_frontend_loan_data(data)
         
         if not is_valid:
             return jsonify({'error': error_message}), 400
         
-        # Get AI prediction using unified system
-        prediction_result = predict_loan_approval(data, use_simple_format=True)
+        # Get AI prediction using system
+        prediction_result = predict_loan_approval(data)
         
         # Create loan request record
         loan_request = LoanRequest(
@@ -83,7 +139,7 @@ def submit_loan_request():
         
         # Format response using utility function
         response = format_prediction_response(prediction_result, loan_request.id)
-        response['message'] = 'Loan request processed successfully'
+        response['message'] = 'Loan request processed successfully with AI model'
         
         current_app.logger.info(f"Loan request {loan_request.id} processed for user {current_user.id}: "
                               f"{prediction_result['approval_status']} using {prediction_result['prediction_method']}")
@@ -93,44 +149,7 @@ def submit_loan_request():
     except Exception as e:
         current_app.logger.error(f"Error in loan request processing: {str(e)}")
         traceback.print_exc()
-        return jsonify({'error': 'Internal server error during loan request processing'}), 500 
-
-@bp.route('/loan-requests', methods=['GET'])
-@login_required
-def get_user_loan_requests():
-    """
-    Retrieve all loan requests for the authenticated user
-    Only banking users can access this endpoint and only their own data
-    """
-    if current_user.role != 'banking_user':
-        return jsonify({'error': 'Unauthorized access'}), 403
-    
-    try:
-        # Only get loan requests for the current user
-        loan_requests = LoanRequest.query.filter_by(user_id=current_user.id).order_by(LoanRequest.created_at.desc()).all()
-        
-        loans_data = []
-        for loan in loan_requests:
-            loans_data.append({
-                'id': loan.id,
-                'amount': loan.amount,
-                'purpose': loan.purpose,
-                'income': loan.income,
-                'employment_years': loan.employment_years,
-                'credit_score': loan.credit_score,
-                'prediction': loan.prediction,
-                'created_at': loan.created_at.isoformat(),
-                'status': loan.prediction.title() if loan.prediction else 'Pending'
-            })
-        
-        return jsonify({
-            'loan_requests': loans_data,
-            'total_count': len(loans_data)
-        })
-        
-    except Exception as e:
-        current_app.logger.error(f"Error fetching loan requests for user {current_user.id}: {str(e)}")
-        return jsonify({'error': 'Failed to fetch loan requests'}), 500
+        return jsonify({'error': 'Internal server error during loan request processing'}), 500
 
 @bp.route('/loan-request/<int:loan_id>', methods=['GET'])
 @login_required
@@ -149,6 +168,18 @@ def get_loan_request_details(loan_id):
         if not loan_request:
             return jsonify({'error': 'Loan request not found or access denied'}), 404
         
+        # Convert prediction to proper status
+        status = 'Pending'  # Default status
+        if loan_request.prediction:
+            prediction_lower = loan_request.prediction.lower().strip()
+            if prediction_lower == 'approved':
+                status = 'Approved'
+            elif prediction_lower == 'rejected':
+                status = 'Rejected'
+            else:
+                # Handle any other prediction values by capitalizing them
+                status = loan_request.prediction.title()
+        
         loan_data = {
             'id': loan_request.id,
             'amount': loan_request.amount,
@@ -157,8 +188,8 @@ def get_loan_request_details(loan_id):
             'employment_years': loan_request.employment_years,
             'credit_score': loan_request.credit_score,
             'prediction': loan_request.prediction,
-            'created_at': loan_request.created_at.isoformat(),
-            'status': loan_request.prediction.title() if loan_request.prediction else 'Pending'
+            'status': status,
+            'created_at': loan_request.created_at.isoformat()
         }
         
         return jsonify({'loan_request': loan_data})
