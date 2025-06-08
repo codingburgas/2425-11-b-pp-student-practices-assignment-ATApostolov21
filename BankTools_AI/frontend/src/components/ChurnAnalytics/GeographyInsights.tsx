@@ -81,34 +81,55 @@ export default function GeographyInsights({ geographyAnalysis }: GeographyInsigh
   useEffect(() => {
     setIsVisible(true)
 
+    // Reset animations when geography data changes
+    if (!geographyAnalysis || Object.keys(geographyAnalysis).length === 0) {
+      setAnimatedHeights({})
+      return
+    }
+
     // Get max values for scaling
     const maxCount = Math.max(...Object.values(geographyAnalysis).map(geo => geo.count))
     const maxRisk = Math.max(...Object.values(geographyAnalysis).map(geo => geo.avg_risk))
 
-    // Animate bar heights
-    const duration = 2000
-    const steps = 60
-    const stepTime = duration / steps
+    // Reset animated heights before starting new animation
+    setAnimatedHeights({})
 
-    let currentStep = 0
-    
-    const timer = setInterval(() => {
-      const progress = currentStep / steps
-      const easeProgress = 1 - Math.pow(1 - progress, 3) // Ease-out cubic
-      
-      const newHeights: { [key: string]: number } = {}
-      Object.entries(geographyAnalysis).forEach(([geo, stats]) => {
-        newHeights[`${geo}_count`] = (stats.count / maxCount) * 100 * easeProgress
-        newHeights[`${geo}_risk`] = (stats.avg_risk / maxRisk) * 100 * easeProgress
-      })
-      
-      setAnimatedHeights(newHeights)
-      
-      currentStep++
-      if (currentStep > steps) clearInterval(timer)
-    }, stepTime)
+    // Small delay to ensure reset is applied
+    const resetTimeout = setTimeout(() => {
+      // Animate bar heights
+      const duration = 2000
+      const steps = 60
+      const stepTime = duration / steps
 
-    return () => clearInterval(timer)
+      let currentStep = 0
+      
+      const timer = setInterval(() => {
+        const progress = currentStep / steps
+        const easeProgress = 1 - Math.pow(1 - progress, 3) // Ease-out cubic
+        
+        const newHeights: { [key: string]: number } = {}
+        Object.entries(geographyAnalysis).forEach(([geo, stats]) => {
+          newHeights[`${geo}_count`] = (stats.count / maxCount) * 100 * easeProgress
+          newHeights[`${geo}_risk`] = (stats.avg_risk / maxRisk) * 100 * easeProgress
+        })
+        
+        setAnimatedHeights(newHeights)
+        
+        currentStep++
+        if (currentStep > steps) clearInterval(timer)
+      }, stepTime)
+
+      return () => clearInterval(timer)
+    }, 100)
+
+    return () => {
+      clearTimeout(resetTimeout)
+    }
+  }, [geographyAnalysis])
+
+  // Reset hovered geo when data changes
+  useEffect(() => {
+    setHoveredGeo(null)
   }, [geographyAnalysis])
 
   const getGeoIcon = (geo: string) => {

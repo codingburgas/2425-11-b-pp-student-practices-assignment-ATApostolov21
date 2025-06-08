@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { banking } from '../../api'
 
 // Import enhanced components from ChurnAnalytics folder
@@ -68,6 +68,7 @@ interface ChurnAnalysisResult {
 
 export default function ChurnAnalysisUpload() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -100,6 +101,7 @@ export default function ChurnAnalysisUpload() {
       const loadExistingAnalysis = async () => {
         setLoading(true)
         setError('')
+        setResult(null) // Clear previous data first
         try {
           console.log('Loading analysis with ID:', id)
           const response = await banking.getChurnAnalysis(parseInt(id))
@@ -108,6 +110,7 @@ export default function ChurnAnalysisUpload() {
           if (response.data && response.data.results) {
             // Extract the results from the nested response structure
             const analysisResults = response.data.results
+            console.log('Setting result data:', analysisResults)
             setResult(analysisResults)
             setIsViewingExisting(true)
             setAnalysisName(response.data.name || `Analysis ${id}`)
@@ -122,8 +125,21 @@ export default function ChurnAnalysisUpload() {
         }
       }
       loadExistingAnalysis()
+    } else {
+      // Clear data when not viewing existing analysis
+      setResult(null)
+      setIsViewingExisting(false)
+      setAnalysisName('')
+      setLoading(false)
     }
   }, [id])
+
+  // Reset active section when result changes
+  useEffect(() => {
+    if (result) {
+      setActiveSection('overview')
+    }
+  }, [result])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -157,7 +173,20 @@ export default function ChurnAnalysisUpload() {
 
     try {
       const response = await banking.uploadChurnAnalysis(file, analysisName.trim())
-      setResult(response.data)
+      console.log('Upload response:', response.data)
+      
+      // Check if response includes analysis_id for redirect
+      if (response.data && response.data.analysis_id) {
+        // Redirect to the new analysis page
+        console.log('Redirecting to analysis:', response.data.analysis_id)
+        navigate(`/churn-analysis/${response.data.analysis_id}`)
+      } else if (response.data && response.data.results) {
+        // Fallback: show results on current page if no analysis_id
+        console.log('Showing results on current page')
+        setResult(response.data.results)
+      } else {
+        setError('Analysis completed but no results received')
+      }
     } catch (error: any) {
       console.error('Upload error:', error)
       setError(error.response?.data?.error || 'Failed to analyze data. Please try again.')
@@ -248,19 +277,36 @@ For detailed customer-level data and recommendations, please refer to the intera
   }
 
   const renderSection = () => {
-    if (!result) return null
+    if (!result) {
+      return (
+        <div className="text-center py-12">
+          <div className="w-16 h-16 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <p className="text-gray-400 text-lg">No analysis data available</p>
+        </div>
+      )
+    }
+
+    console.log('Rendering section:', activeSection, 'with result:', result)
 
     switch (activeSection) {
       case 'overview':
         return (
           <div id="overview" className="space-y-8">
-            <ChurnSummaryCards summary={result.summary} />
-        </div>
+            <ChurnSummaryCards 
+              key={`summary-${id || 'new'}`}
+              summary={result.summary} 
+            />
+          </div>
         )
       case 'distribution':
         return (
           <div id="distribution" className="space-y-8">
             <RiskDistributionChart 
+              key={`distribution-${id || 'new'}`}
               riskDistribution={result.risk_distribution}
               totalCustomers={result.summary?.total_customers || 0}
             />
@@ -269,25 +315,37 @@ For detailed customer-level data and recommendations, please refer to the intera
       case 'geography':
         return (
           <div id="geography" className="space-y-8">
-            <GeographyInsights geographyAnalysis={result.geography_analysis} />
+            <GeographyInsights 
+              key={`geography-${id || 'new'}`}
+              geographyAnalysis={result.geography_analysis} 
+            />
           </div>
         )
       case 'factors':
         return (
           <div id="factors" className="space-y-8">
-            <RiskFactorsChart riskFactors={result.risk_factors} />
+            <RiskFactorsChart 
+              key={`factors-${id || 'new'}`}
+              riskFactors={result.risk_factors} 
+            />
           </div>
         )
       case 'customers':
         return (
           <div id="customers" className="space-y-8">
-            <CustomerDataTable customers={result.customer_details} />
+            <CustomerDataTable 
+              key={`customers-${id || 'new'}`}
+              customers={result.customer_details} 
+            />
           </div>
         )
       default:
         return (
           <div id="overview" className="space-y-8">
-            <ChurnSummaryCards summary={result.summary} />
+            <ChurnSummaryCards 
+              key={`summary-default-${id || 'new'}`}
+              summary={result.summary} 
+            />
           </div>
         )
     }
@@ -558,6 +616,16 @@ For detailed customer-level data and recommendations, please refer to the intera
         ) : (
           // Enhanced Results Section
           <div className={`space-y-8 transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            {/* Show loading overlay while data is being processed */}
+            {loading && (
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+                <div className="bg-gray-800/90 rounded-2xl p-8 flex items-center gap-4">
+                  <div className="w-8 h-8 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span className="text-white text-lg">Loading analysis data...</span>
+                </div>
+              </div>
+            )}
+
             {/* Navigation Bar */}
             <NavigationBar 
               activeSection={activeSection}
@@ -565,7 +633,9 @@ For detailed customer-level data and recommendations, please refer to the intera
             />
 
             {/* Dynamic Content Based on Active Section */}
-            {renderSection()}
+            <div className={`transition-opacity duration-300 ${result ? 'opacity-100' : 'opacity-50'}`}>
+              {renderSection()}
+            </div>
 
             {/* Enhanced Actions */}
             <div className="flex gap-4">

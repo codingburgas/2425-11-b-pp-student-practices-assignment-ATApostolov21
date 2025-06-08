@@ -13,6 +13,13 @@ class User(UserMixin, db.Model):
     verification_token = db.Column(db.String(100), unique=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # Google OAuth fields
+    google_id = db.Column(db.String(100), unique=True, nullable=True)
+    first_name = db.Column(db.String(50), nullable=True)
+    last_name = db.Column(db.String(50), nullable=True)
+    profile_picture = db.Column(db.String(255), nullable=True)
+    auth_provider = db.Column(db.String(20), default='local')  # 'local' or 'google'
+    
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
     

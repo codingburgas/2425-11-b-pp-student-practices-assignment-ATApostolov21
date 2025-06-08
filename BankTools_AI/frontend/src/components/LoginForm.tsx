@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import type { User } from '../types'
 import { auth } from '../api'
 import Logo from './Logo'
+import GoogleLoginButton from './GoogleLoginButton'
 
 interface LoginFormProps {
   onSuccess: (user: User) => void
@@ -49,6 +50,16 @@ export default function LoginForm({ onSuccess, onNavigateToRegister, onBackToLan
     }
   }
 
+  const handleGoogleSuccess = (user: User) => {
+    const dashboardType = user.role === 'banking_user' ? 'Customer Dashboard' : 'Employee Analytics Dashboard'
+    setSuccess(`✅ Google login successful! Welcome ${user.email}. Redirecting to your ${dashboardType}...`)
+    onSuccess(user)
+  }
+
+  const handleGoogleError = (errorMessage: string) => {
+    setError(errorMessage)
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex flex-col justify-center px-6 py-12 lg:px-8 relative overflow-hidden">
       {/* Animated background elements */}
@@ -89,6 +100,24 @@ export default function LoginForm({ onSuccess, onNavigateToRegister, onBackToLan
 
       <div className="relative z-10 mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
         <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 py-8 px-6 shadow-2xl rounded-3xl">
+          {/* Google Login Button */}
+          <div className="mb-6">
+            <GoogleLoginButton 
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+            />
+          </div>
+
+          {/* Divider */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-600"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gray-800/50 text-gray-400">Or continue with email</span>
+            </div>
+          </div>
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">

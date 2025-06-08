@@ -21,39 +21,53 @@ export default function ChurnSummaryCards({ summary }: ChurnSummaryCardsProps) {
   })
 
   useEffect(() => {
-    // Add null check to prevent runtime errors
     if (!summary) return
     
     setIsVisible(true)
     
-    // Animate numbers with safe defaults
-    const totalTarget = summary.total_customers || 0
-    const avgTarget = (summary.avg_churn_risk || 0) * 100
-    const highTarget = summary.high_risk_customers || 0
-    const churnTarget = summary.churn_rate_percentage || 0
-
-    const duration = 2000
-    const steps = 60
-    const stepTime = duration / steps
-
-    let currentStep = 0
+    // Reset animated values before starting new animation
+    setAnimatedValues({
+      totalCustomers: 0,
+      avgChurnRisk: 0,
+      highRiskCustomers: 0,
+      churnRate: 0
+    })
     
-    const timer = setInterval(() => {
-      const progress = currentStep / steps
-      const easeProgress = 1 - Math.pow(1 - progress, 3) // Ease-out cubic
-      
-      setAnimatedValues({
-        totalCustomers: Math.floor(totalTarget * easeProgress),
-        avgChurnRisk: avgTarget * easeProgress,
-        highRiskCustomers: Math.floor(highTarget * easeProgress),
-        churnRate: churnTarget * easeProgress
-      })
-      
-      currentStep++
-      if (currentStep > steps) clearInterval(timer)
-    }, stepTime)
+    // Small delay to ensure reset is applied
+    const resetTimeout = setTimeout(() => {
+      // Animate numbers with safe defaults
+      const totalTarget = summary.total_customers || 0
+      const avgTarget = (summary.avg_churn_risk || 0) * 100
+      const highTarget = summary.high_risk_customers || 0
+      const churnTarget = summary.churn_rate_percentage || 0
 
-    return () => clearInterval(timer)
+      const duration = 2000
+      const steps = 60
+      const stepTime = duration / steps
+
+      let currentStep = 0
+      
+      const timer = setInterval(() => {
+        const progress = currentStep / steps
+        const easeProgress = 1 - Math.pow(1 - progress, 3) // Ease-out cubic
+        
+        setAnimatedValues({
+          totalCustomers: Math.floor(totalTarget * easeProgress),
+          avgChurnRisk: avgTarget * easeProgress,
+          highRiskCustomers: Math.floor(highTarget * easeProgress),
+          churnRate: churnTarget * easeProgress
+        })
+        
+        currentStep++
+        if (currentStep > steps) clearInterval(timer)
+      }, stepTime)
+
+      return () => clearInterval(timer)
+    }, 100)
+
+    return () => {
+      clearTimeout(resetTimeout)
+    }
   }, [summary])
 
   const getRiskLevel = (percentage: number) => {

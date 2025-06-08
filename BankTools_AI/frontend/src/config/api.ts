@@ -2,24 +2,24 @@ export const API_CONFIG = {
   BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5001',
   ENDPOINTS: {
     AUTH: {
-      LOGIN: '/auth/login',
-      REGISTER: '/auth/register',
-      LOGOUT: '/auth/logout',
+      LOGIN: '/api/auth/login',
+      REGISTER: '/api/auth/register',
+      LOGOUT: '/api/auth/logout',
     },
     USER: {
-      LOAN_REQUEST: '/user/loan-request',
-      LOAN_REQUESTS: '/user/loan-requests',
-      LOAN_REQUEST_DETAILS: '/user/loan-request',
-      DELETE_LOAN_REQUEST: '/user/loan-request',
+      LOAN_REQUEST: '/api/user/loan-request',
+      LOAN_REQUESTS: '/api/user/loan-requests',
+      LOAN_REQUEST_DETAILS: '/api/user/loan-request',
+      DELETE_LOAN_REQUEST: '/api/user/loan-request',
     },
     AI_MODELS: {
       PREDICT_LOAN: '/api/predict-loan',
     },
     ADMIN: {
-      CHURN_UPLOAD: '/admin/churn-upload',
-      CHURN_ANALYSES: '/admin/churn-analyses',
-      CHURN_ANALYSIS: '/admin/churn-analysis',
-      DELETE_CHURN_ANALYSIS: '/admin/churn-analysis',
+      CHURN_UPLOAD: '/api/admin/churn-upload',
+      CHURN_ANALYSES: '/api/admin/churn-analyses',
+      CHURN_ANALYSIS: '/api/admin/churn-analysis',
+      DELETE_CHURN_ANALYSIS: '/api/admin/churn-analysis',
     },
   },
   HEADERS: {

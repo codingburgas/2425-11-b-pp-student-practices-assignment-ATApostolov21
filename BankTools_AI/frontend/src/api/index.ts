@@ -22,7 +22,7 @@ api.interceptors.response.use(
 
 export const auth = {
   register: (email: string, password: string, role: User['role']) =>
-    api.post(API_CONFIG.ENDPOINTS.AUTH.REGISTER, { email, password, role }),
+    api.post(API_CONFIG.ENDPOINTS.AUTH.REGISTER, { email, password, account_type: role === 'banking_user' ? 'customer' : 'employee' }),
   
   login: (email: string, password: string) =>
     api.post(API_CONFIG.ENDPOINTS.AUTH.LOGIN, { email, password }),
