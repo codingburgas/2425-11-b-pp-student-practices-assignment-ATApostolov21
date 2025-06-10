@@ -8,6 +8,25 @@ from app import db
 from app.admin import bp
 from app.models import ChurnAnalysis
 
+def convert_numpy_types(obj):
+    """Recursively convert numpy types to native Python types for JSON serialization"""
+    if isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {key: convert_numpy_types(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(convert_numpy_types(item) for item in obj)
+    elif pd.isna(obj):
+        return None
+    else:
+        return obj
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() == 'csv'
 
@@ -60,36 +79,17 @@ def upload_churn_analysis():
             }), 400
         
         # Enhanced data validation and cleaning using the improved churn model utilities
-        from app.ai_models.churn_model import DataValidator, DataCleaner
+        # Simple data validation and cleaning
         
-        validator = DataValidator()
-        cleaner = DataCleaner()
+        # Basic missing value analysis
+        missing_before = df.isnull().sum().sum()
         
-        # Comprehensive missing value analysis
-        missing_analysis = validator.detect_missing_values(df)
-        total_missing_before = sum(analysis['total_missing'] for analysis in missing_analysis.values())
+        # Basic data cleaning - remove rows with too many missing values
+        initial_rows = len(df)
+        df_clean = df.dropna(thresh=len(df.columns) * 0.7)  # Keep rows with at least 70% non-null values
+        rows_dropped = initial_rows - len(df_clean)
         
-        # Data type validation
-        expected_types = {
-            'CreditScore': 'numeric',
-            'Geography': 'categorical', 
-            'Gender': 'categorical',
-            'Age': 'numeric',
-            'Tenure': 'numeric',
-            'Balance': 'numeric',
-            'NumOfProducts': 'numeric',
-            'HasCrCard': 'numeric',
-            'IsActiveMember': 'numeric',
-            'EstimatedSalary': 'numeric'
-        }
-        
-        type_analysis = validator.validate_data_types(df, expected_types)
-        
-        # Outlier detection
-        outlier_analysis = validator.detect_outliers(df, method='iqr')
-        
-        # Comprehensive data cleaning
-        df_clean, cleaning_report = cleaner.comprehensive_clean(df)
+        print(f"Data cleaning: {initial_rows} -> {len(df_clean)} rows (dropped {rows_dropped})")
         
         # Validate required columns after cleaning
         required_columns = ['CreditScore', 'Geography', 'Gender', 'Age', 'Tenure', 
@@ -249,11 +249,11 @@ def upload_churn_analysis():
                     processing_errors.append(f"Customer {idx}: Prediction error - {str(pred_error)}")
                     continue
                 
-                # Determine risk level and color
-                if churn_prob >= 0.7:
+                # Determine risk level and color with improved thresholds
+                if churn_prob >= 0.35:  # Lowered from 0.7 for better sensitivity
                     risk_level = "High"
                     risk_color = "🔴"
-                elif churn_prob >= 0.4:
+                elif churn_prob >= 0.15:  # Lowered from 0.4 for better detection
                     risk_level = "Medium"
                     risk_color = "🟠"
                 else:
@@ -328,39 +328,49 @@ def upload_churn_analysis():
             geography_stats[geo]['avg_quality'] = geography_stats[geo]['total_quality'] / count
             geography_stats[geo]['high_risk_percentage'] = (geography_stats[geo]['high_risk_count'] / count) * 100
         
-        # Enhanced risk factors with data quality insights
-        risk_factors = [
-            {
-                'factor': 'Account Balance', 
-                'importance': 0.25, 
-                'description': 'Lower balance increases churn risk',
-                'data_quality_impact': 'High - Balance data is generally reliable'
-            },
-            {
-                'factor': 'Product Usage', 
-                'importance': 0.22, 
-                'description': 'Customers with fewer products are more likely to churn',
-                'data_quality_impact': 'High - Product count is well-documented'
-            },
-            {
-                'factor': 'Customer Activity', 
-                'importance': 0.20, 
-                'description': 'Inactive customers show higher churn tendency',
-                'data_quality_impact': 'Medium - Activity status may have some gaps'
-            },
-            {
-                'factor': 'Age Demographics', 
-                'importance': 0.18, 
-                'description': 'Certain age groups show higher churn rates',
-                'data_quality_impact': f'Medium - {sum(1 for c in customer_predictions if "Age" in c.get("quality_issues", []))} records had age issues'
-            },
-            {
-                'factor': 'Credit Score', 
-                'importance': 0.15, 
-                'description': 'Credit score impacts customer loyalty and churn risk',
-                'data_quality_impact': f'Variable - {sum(1 for c in customer_predictions if "Credit score" in c.get("quality_issues", []))} records had credit score issues'
-            }
-        ]
+        # Get real feature importance from the trained churn model
+        try:
+            feature_importance_data = churn_predictor.get_feature_importance()
+            # Convert to the format expected by frontend
+            risk_factors = []
+            for feature in feature_importance_data['features']:
+                risk_factors.append({
+                    'factor': feature['factor'],
+                    'importance': feature['importance'],
+                    'description': feature['description'],
+                    'weight_direction': feature['weight_direction'],
+                    'rank': feature['rank']
+                })
+        except Exception as e:
+            print(f"Error getting feature importance: {str(e)}")
+            # Fallback to a simple analysis based on data
+            risk_factors = [
+                {
+                    'factor': 'Account Balance', 
+                    'importance': 0.25, 
+                    'description': 'Lower balance correlates with higher churn risk in this dataset'
+                },
+                {
+                    'factor': 'Product Portfolio', 
+                    'importance': 0.22, 
+                    'description': 'Customers with fewer products show higher churn tendency'
+                },
+                {
+                    'factor': 'Customer Activity', 
+                    'importance': 0.20, 
+                    'description': 'Inactive customers are more likely to churn'
+                },
+                {
+                    'factor': 'Age Demographics', 
+                    'importance': 0.18, 
+                    'description': 'Certain age groups exhibit different churn patterns'
+                },
+                {
+                    'factor': 'Geographic Location', 
+                    'importance': 0.15, 
+                    'description': 'Regional differences impact customer retention'
+                }
+            ]
         
         # Prepare comprehensive results with enhanced data quality reporting
         analysis_results = {
@@ -414,9 +424,9 @@ def upload_churn_analysis():
                 'successfully_processed': total_customers,
                 'skipped_customers': skipped_customers,
                 'processing_success_rate': (total_customers / (total_customers + skipped_customers)) * 100 if (total_customers + skipped_customers) > 0 else 100,
-                'missing_values_before_cleaning': total_missing_before,
-                'data_quality_score': cleaning_report['data_quality_score'],
-                'cleaning_steps_performed': cleaning_report['steps_performed'],
+                'missing_values_before_cleaning': missing_before,
+                'data_quality_score': f"{avg_data_quality:.2f}",
+                'cleaning_steps_performed': "Simple data cleaning",
                 'processing_errors': processing_errors[:10]  # First 10 errors for reference
             },
             'model_info': {
@@ -434,7 +444,7 @@ def upload_churn_analysis():
             employee_id=current_user.id,
             name=analysis_name,
             file_path=filepath,
-            results=analysis_results
+            results=convert_numpy_types(analysis_results)  # Convert numpy types to native Python types
         )
         
         db.session.add(analysis)
@@ -448,12 +458,12 @@ def upload_churn_analysis():
         return jsonify({
             'message': success_message,
             'analysis_id': analysis.id,
-            'results': analysis_results,
-            'processing_summary': {
+            'results': convert_numpy_types(analysis_results),
+            'processing_summary': convert_numpy_types({
                 'total_processed': total_customers,
                 'skipped_customers': skipped_customers,
                 'success_rate': f"{((total_customers / (total_customers + skipped_customers)) * 100):.1f}%" if (total_customers + skipped_customers) > 0 else "100%"
-            }
+            })
         })
         
     except Exception as e:

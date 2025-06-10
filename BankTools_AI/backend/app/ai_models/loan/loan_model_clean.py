@@ -58,6 +58,11 @@ class LoanPredictor(BasePredictor):
         # Create features aligned with frontend
         df_processed = LoanFeatureEngineer.create_aligned_features(df_clean)
         
+        # Drop string columns that are not meant for categorical encoding
+        # The purpose column is synthetic and should be dropped for training
+        string_columns_to_drop = ['purpose']  # Add other string columns that shouldn't be encoded
+        df_processed = df_processed.drop([col for col in string_columns_to_drop if col in df_processed.columns], axis=1)
+        
         # Validate target column
         if 'Loan_Status' not in df_processed.columns:
             raise ValueError("Target column 'Loan_Status' not found in dataset")
@@ -77,6 +82,12 @@ class LoanPredictor(BasePredictor):
         # Separate features and target
         X = df_encoded.drop('Loan_Status', axis=1)
         y = df_encoded['Loan_Status'].values
+        
+        # Final check: drop any remaining string columns that slipped through
+        string_columns = X.select_dtypes(include=['object']).columns.tolist()
+        if string_columns:
+            print(f"Dropping remaining string columns: {string_columns}")
+            X = X.drop(string_columns, axis=1)
         
         # Convert target to binary (Y=1, N=0)
         y = (y == 'Y').astype(int)
@@ -164,6 +175,10 @@ class LoanPredictor(BasePredictor):
         df_clean = LoanDataCleaner.clean_loan_data(df)
         df_processed = LoanFeatureEngineer.create_aligned_features(df_clean)
         
+        # Drop string columns that are not meant for categorical encoding
+        string_columns_to_drop = ['purpose']
+        df_processed = df_processed.drop([col for col in string_columns_to_drop if col in df_processed.columns], axis=1)
+        
         # Encode categorical variables
         categorical_cols = ['Gender', 'Married', 'Education', 'Self_Employed', 'Property_Area']
         existing_categorical_cols = [col for col in categorical_cols if col in df_processed.columns]
@@ -199,7 +214,8 @@ class LoanPredictor(BasePredictor):
             'approval_probability': float(probability),
             'approval_prediction': prediction,
             'approval_status': approval_status,
-            'confidence': float(confidence),
+            'confidence_level': self._get_confidence_level(confidence),
+            'confidence': float(confidence),  # Keep both for backward compatibility
             'risk_level': risk_level,
             'recommendations': recommendations
         }
@@ -253,6 +269,15 @@ class LoanPredictor(BasePredictor):
             return "High Risk"
         else:
             return "Very High Risk"
+    
+    def _get_confidence_level(self, confidence: float) -> str:
+        """Convert numeric confidence to text level"""
+        if confidence > 0.8:
+            return "High"
+        elif confidence > 0.6:
+            return "Medium"
+        else:
+            return "Low"
     
     def _generate_loan_recommendations(self, data: Dict[str, Any], 
                                      probability: float, prediction: int) -> List[str]:

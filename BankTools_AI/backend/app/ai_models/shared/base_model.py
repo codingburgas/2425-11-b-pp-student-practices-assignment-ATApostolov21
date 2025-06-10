@@ -112,6 +112,76 @@ class LogisticRegression:
             if i % 100 == 0:
                 print(f"Iteration {i}, Cost: {cost:.4f}")
     
+    def fit_weighted(self, X: np.ndarray, y: np.ndarray, sample_weights: np.ndarray = None) -> None:
+        """
+        Train the logistic regression model with sample weights for class balancing
+        
+        Args:
+            X: Feature matrix (m x n)
+            y: Target vector (m,)
+            sample_weights: Sample weights for class balancing (m,)
+        """
+        X = np.asarray(X, dtype=np.float64)
+        y = np.asarray(y, dtype=np.float64)
+        m, n = X.shape
+        
+        if sample_weights is None:
+            sample_weights = np.ones(m)
+        else:
+            sample_weights = np.asarray(sample_weights, dtype=np.float64)
+        
+        # Normalize sample weights
+        sample_weights = sample_weights / np.sum(sample_weights) * m
+        
+        # Initialize weights and bias
+        self.weights = np.random.normal(0, 0.01, n).astype(np.float64)
+        self.bias = 0.0
+        
+        prev_cost = float('inf')
+        
+        for i in range(self.max_iterations):
+            # Forward pass
+            z = X.dot(self.weights) + self.bias
+            predictions = self.sigmoid(z)
+            
+            # Compute weighted cost
+            cost = self._compute_weighted_cost(y, predictions, sample_weights)
+            self.cost_history.append(cost)
+            
+            # Compute weighted gradients
+            error = predictions - y
+            dw = (1/m) * X.T.dot(error * sample_weights)
+            db = (1/m) * np.sum(error * sample_weights)
+            
+            # Update weights
+            self.weights -= self.learning_rate * dw
+            self.bias -= self.learning_rate * db
+            
+            # Check for convergence
+            if abs(prev_cost - cost) < self.tolerance:
+                print(f"Converged after {i+1} iterations")
+                break
+                
+            prev_cost = cost
+            
+            if i % 100 == 0:
+                print(f"Iteration {i}, Weighted Cost: {cost:.4f}")
+    
+    def _compute_weighted_cost(self, y_true: np.ndarray, y_pred: np.ndarray, sample_weights: np.ndarray) -> float:
+        """Compute weighted logistic regression cost"""
+        y_true = np.asarray(y_true, dtype=np.float64)
+        y_pred = np.asarray(y_pred, dtype=np.float64)
+        sample_weights = np.asarray(sample_weights, dtype=np.float64)
+        m = len(y_true)
+        
+        # Add small epsilon to prevent log(0)
+        epsilon = 1e-15
+        y_pred = np.clip(y_pred, epsilon, 1 - epsilon)
+        
+        # Weighted cross-entropy
+        cost = -(1/m) * np.sum(sample_weights * (y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred)))
+        return cost
+    
     def _compute_cost(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
         """Compute logistic regression cost (cross-entropy)"""
         y_true = np.asarray(y_true, dtype=np.float64)

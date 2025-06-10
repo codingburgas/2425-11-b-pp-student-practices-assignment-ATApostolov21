@@ -32,8 +32,8 @@ export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
     const fetchRecentAnalyses = async () => {
       try {
         const response = await banking.getChurnAnalyses()
-        const analyses = response.data.analyses.slice(0, 3)
-        setRecentAnalyses(analyses)
+        const analyses = response.data.analyses
+        setRecentAnalyses(analyses) // Show all analyses, not just 3
         
         // Calculate real stats from most recent analysis
         if (analyses.length > 0) {
@@ -90,7 +90,7 @@ export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
     return () => clearTimeout(animationTimeout)
   }, [realStats.totalCustomers, realStats.avgChurnRate])
 
-  // Delete analysis function
+  // Enhanced delete analysis function
   const deleteAnalysis = async (analysisId: number, analysisName: string) => {
     if (!confirm(`Are you sure you want to delete the analysis "${analysisName}"? This action cannot be undone.`)) {
       return
@@ -124,27 +124,46 @@ export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
       
     } catch (error) {
       console.error('Failed to delete analysis:', error)
-      
-      // Show error message
-      const errorMessage = document.createElement('div')
-      errorMessage.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in'
-      errorMessage.innerHTML = `
-        <div class="flex items-center gap-3">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-          <span>Failed to delete analysis. Please try again.</span>
-        </div>
-      `
-      document.body.appendChild(errorMessage)
-      setTimeout(() => {
-        if (document.body.contains(errorMessage)) {
-          document.body.removeChild(errorMessage)
-        }
-      }, 3000)
+      alert('Failed to delete analysis. Please try again.')
     } finally {
       setDeletingAnalysisId(null)
     }
+  }
+
+  const handleNewAnalysis = () => {
+    window.location.href = '/churn-analysis'
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  const getRiskLevelBadge = (avgRisk: number, highRiskCount: number) => {
+    const riskPercentage = avgRisk * 100
+    let color, label
+    
+    if (riskPercentage >= 25 || highRiskCount > 50) {
+      color = 'text-red-400 bg-red-500/20 border-red-500/30'
+      label = 'High Risk'
+    } else if (riskPercentage >= 15 || highRiskCount > 20) {
+      color = 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30'
+      label = 'Medium Risk'
+    } else {
+      color = 'text-green-400 bg-green-500/20 border-green-500/30'
+      label = 'Low Risk'
+    }
+    
+    return (
+      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${color}`}>
+        {label}
+      </span>
+    )
   }
 
   const analyticsTools = [
@@ -451,135 +470,119 @@ export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
           </div>
         </div>
 
-        {/* Recent Activity & Advanced Analytics */}
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Recent Activity */}
-          <div className={`transition-all duration-1000 delay-600 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">Recent Churn Analyses</h2>
-            </div>
-            <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-6">
-              <div className="space-y-3">
-                {recentAnalyses.length > 0 ? (
-                  recentAnalyses.map((analysis, index) => (
-                    <div
-                      key={analysis.id}
-                      className="group flex items-center p-6 bg-gray-900/40 rounded-xl hover:bg-gray-900/60 transition-all duration-300 border border-gray-700/30 hover:border-purple-500/40"
-                    >
-                      {/* Icon */}
-                      <div className="w-12 h-12 rounded-lg flex items-center justify-center mr-6 bg-purple-500/20 text-purple-400 group-hover:bg-purple-500/30 transition-colors">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                      </div>
-                      
-                      {/* Content - Clickable Link */}
-                      <Link
-                        to={`/churn-analysis/${analysis.id}`}
-                        className="flex-1 flex items-center cursor-pointer"
-                      >
-                        <div className="flex-1">
-                          <div className="text-lg text-white font-semibold group-hover:text-purple-300 transition-colors mb-2">
+        {/* Comprehensive Churn Analyses Table */}
+        <div className={`mb-12 transition-all duration-1000 delay-600 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white">Churn Analysis History</h2>
+            <Link 
+              to="/churn-analysis" 
+              className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              New Analysis
+            </Link>
+          </div>
+          
+          <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-2xl overflow-hidden">
+            {recentAnalyses.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-900/60 border-b border-gray-700/50">
+                    <tr>
+                      <th className="text-left py-4 px-6 text-gray-300 font-medium">Analysis Name</th>
+                      <th className="text-left py-4 px-6 text-gray-300 font-medium">Date</th>
+                      <th className="text-center py-4 px-6 text-gray-300 font-medium">Customers</th>
+                      <th className="text-center py-4 px-6 text-gray-300 font-medium">Avg Risk</th>
+                      <th className="text-center py-4 px-6 text-gray-300 font-medium">High Risk</th>
+                      <th className="text-center py-4 px-6 text-gray-300 font-medium">Risk Level</th>
+                      <th className="text-center py-4 px-6 text-gray-300 font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700/30">
+                    {recentAnalyses.map((analysis, index) => (
+                      <tr key={analysis.id} className="group hover:bg-gray-900/40 transition-colors">
+                        <td className="py-4 px-6">
+                          <Link 
+                            to={`/churn-analysis/${analysis.id}`} 
+                            className="text-white font-medium hover:text-purple-300 transition-colors"
+                          >
                             {analysis.name}
-                          </div>
-                          <div className="flex items-center gap-6 text-sm">
-                            <span className="text-gray-400">{analysis.total_customers.toLocaleString()} customers</span>
-                            <span className="text-red-400 font-medium">{analysis.high_risk_customers} high risk</span>
-                            <span className="text-gray-500">{new Date(analysis.created_at).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                        
-                        {/* Risk Score */}
-                        <div className="text-right mr-6">
-                          <div className="text-2xl font-bold text-white group-hover:text-purple-300 transition-colors">
+                          </Link>
+                        </td>
+                        <td className="py-4 px-6 text-gray-400">
+                          {formatDate(analysis.created_at)}
+                        </td>
+                        <td className="py-4 px-6 text-center text-white">
+                          {analysis.total_customers.toLocaleString()}
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <div className="text-white font-bold">
                             {(analysis.avg_churn_risk * 100).toFixed(1)}%
                           </div>
-                          <div className="text-sm text-gray-400">avg risk</div>
-                        </div>
-
-                        {/* Arrow */}
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                          <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </div>
-                      </Link>
-
-                      {/* Delete Button */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          deleteAnalysis(analysis.id, analysis.name)
-                        }}
-                        disabled={deletingAnalysisId === analysis.id}
-                        className="ml-4 opacity-0 group-hover:opacity-100 transition-all duration-300 w-10 h-10 bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 hover:border-red-500/50 rounded-lg flex items-center justify-center text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-110"
-                        title="Delete analysis"
-                      >
-                        {deletingAnalysisId === analysis.id ? (
-                          <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin"></div>
-                        ) : (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
-                    </div>
-                    <p className="text-gray-400 font-medium mb-2">No analyses yet</p>
-                    <p className="text-gray-500 text-sm mb-4">Upload customer data to get started</p>
-                    <Link 
-                      to="/churn-analysis" 
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                      Create Analysis
-                    </Link>
-                  </div>
-                )}
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <span className="text-red-400 font-medium">
+                            {analysis.high_risk_customers}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          {getRiskLevelBadge(analysis.avg_churn_risk, analysis.high_risk_customers)}
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <Link
+                              to={`/churn-analysis/${analysis.id}`}
+                              className="p-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg transition-colors"
+                              title="View Details"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </Link>
+                            <button
+                              onClick={() => deleteAnalysis(analysis.id, analysis.name)}
+                              disabled={deletingAnalysisId === analysis.id}
+                              className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Delete Analysis"
+                            >
+                              {deletingAnalysisId === analysis.id ? (
+                                <div className="w-4 h-4 border-2 border-red-300/30 border-t-red-300 rounded-full animate-spin"></div>
+                              ) : (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </div>
-          </div>
-
-          {/* Advanced Analytics Suite */}
-          <div className={`transition-all duration-1000 delay-800 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <h2 className="text-2xl font-bold text-white mb-6">Analytics Suite</h2>
-            <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 backdrop-blur-xl border border-green-500/30 rounded-3xl p-6">
-              <div className="flex items-center mb-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-2xl flex items-center justify-center mr-4">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            ) : (
+              <div className="text-center py-16">
+                <div className="w-20 h-20 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-white">🔬 Advanced Analytics</h3>
+                <h3 className="text-xl font-bold text-white mb-2">No Churn Analyses Yet</h3>
+                <p className="text-gray-400 mb-6">Start analyzing customer churn patterns by uploading your customer data</p>
+                <Link 
+                  to="/churn-analysis" 
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-purple-600 text-white font-medium rounded-xl hover:bg-purple-700 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                  </svg>
+                  Upload Customer Data
+                </Link>
               </div>
-              <p className="text-gray-300 mb-6">
-                Leverage cutting-edge AI tools to gain deep insights into customer behavior, optimize loan processes, and predict market trends.
-              </p>
-              <div className="grid gap-4">
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                  <div className="text-sm font-medium text-white">Predictive Modeling</div>
-                  <div className="text-xs text-gray-300">Forecast customer behavior patterns</div>
-                </div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                  <div className="text-sm font-medium text-white">Risk Assessment</div>
-                  <div className="text-xs text-gray-300">Real-time risk evaluation engine</div>
-                </div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                  <div className="text-sm font-medium text-white">Data Visualization</div>
-                  <div className="text-xs text-gray-300">Interactive charts and insights</div>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

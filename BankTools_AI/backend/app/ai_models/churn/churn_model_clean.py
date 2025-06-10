@@ -83,9 +83,17 @@ class ChurnPredictor(BasePredictor):
         # Step 3: Feature engineering and final preprocessing
         df_processed = ChurnFeatureEngineer.create_churn_features(df_clean)
         
-        # Drop unnecessary columns
-        columns_to_drop = ['RowNumber', 'CustomerId', 'Surname']
+        # Drop unnecessary columns including any string/object columns that shouldn't be in features
+        columns_to_drop = ['RowNumber', 'CustomerId', 'Surname', 'CustomerName']
         df_processed = df_processed.drop([col for col in columns_to_drop if col in df_processed.columns], axis=1)
+        
+        # Also drop any remaining object/string columns that aren't categorical features we want to encode
+        string_columns = df_processed.select_dtypes(include=['object']).columns.tolist()
+        categorical_cols_to_keep = ['Geography', 'Gender']  # These we want to one-hot encode
+        unwanted_string_cols = [col for col in string_columns if col not in categorical_cols_to_keep]
+        if unwanted_string_cols:
+            print(f"Dropping additional string columns: {unwanted_string_cols}")
+            df_processed = df_processed.drop(unwanted_string_cols, axis=1)
         
         # Validate target column
         if 'Exited' not in df_processed.columns:
@@ -279,8 +287,15 @@ class ChurnPredictor(BasePredictor):
         probability = self.model.predict_proba(X_norm)[0]
         prediction = int(probability >= 0.5)
         
-        # Generate insights
-        risk_level = "High" if probability > 0.7 else "Medium" if probability > 0.3 else "Low"
+        # Updated risk thresholds for better sensitivity to churn detection
+        # Based on analysis: actual churn rate is ~20%, so we need more sensitive thresholds
+        if probability >= 0.35:  # Lowered from 0.7 - more realistic for banking
+            risk_level = "High"
+        elif probability >= 0.15:  # Lowered from 0.3 - catch more at-risk customers
+            risk_level = "Medium"
+        else:
+            risk_level = "Low"
+        
         recommendations = self._generate_churn_recommendations(customer_data, probability, prediction)
         
         return {
@@ -294,11 +309,43 @@ class ChurnPredictor(BasePredictor):
         """Generate personalized recommendations based on churn prediction"""
         recommendations = []
         
-        if probability > 0.5:
+        # High-risk customers (>35% churn probability)
+        if probability > 0.35:
             recommendations.extend([
-                "Offer personalized retention incentives",
-                "Increase customer engagement through targeted communications",
-                "Review account benefits and suggest upgrades"
+                "🚨 IMMEDIATE ACTION: Contact customer within 24 hours",
+                "💰 Offer retention incentive (fee waiver, bonus interest rate)",
+                "📞 Schedule personal consultation with relationship manager",
+                "🎯 Review and upgrade account benefits package"
+            ])
+            
+            # Specific recommendations based on customer profile
+            if data.get('IsActiveMember', 1) == 0:
+                recommendations.append("⚡ Focus on re-engagement - customer is inactive")
+            if data.get('NumOfProducts', 2) == 1:
+                recommendations.append("📦 Cross-sell additional products to increase stickiness")
+            if data.get('Balance', 0) == 0:
+                recommendations.append("💳 Encourage account usage with targeted offers")
+                
+        # Medium-risk customers (15-35% churn probability)
+        elif probability > 0.15:
+            recommendations.extend([
+                "📋 Monitor account activity closely",
+                "📧 Increase personalized communication frequency",
+                "🎁 Provide value-added services and exclusive offers",
+                "📊 Track engagement metrics monthly"
+            ])
+            
+            if data.get('Age', 40) < 30:
+                recommendations.append("📱 Promote digital banking features for younger customers")
+            elif data.get('Age', 40) > 60:
+                recommendations.append("🏪 Ensure excellent branch service experience")
+                
+        # Low-risk customers (<15% churn probability)
+        else:
+            recommendations.extend([
+                "✅ Customer appears stable - maintain current service level",
+                "📈 Consider for premium product upselling opportunities",
+                "🌟 Use as reference for customer satisfaction surveys"
             ])
         
         return recommendations
@@ -341,6 +388,121 @@ class ChurnPredictor(BasePredictor):
         plt.ylabel('Cost (Cross-Entropy)')
         plt.grid(True)
         plt.show()
+    
+    def get_feature_importance(self) -> Dict[str, Any]:
+        """
+        Calculate real feature importance from the trained model weights
+        
+        Returns:
+            Dictionary with feature importance analysis
+        """
+        if not self.is_trained:
+            raise ValueError("Model not trained yet. Call train() first.")
+        
+        # Get absolute weights (importance magnitude)
+        abs_weights = np.abs(self.model.weights)
+        
+        # Normalize to percentages
+        total_weight = np.sum(abs_weights)
+        importance_percentages = (abs_weights / total_weight) * 100
+        
+        # Create feature importance ranking
+        feature_importance = []
+        for i, feature in enumerate(self.feature_names):
+            importance = importance_percentages[i] / 100  # Convert back to 0-1 scale
+            
+            # Generate meaningful descriptions based on the feature
+            description = self._get_feature_description(feature, self.model.weights[i])
+            
+            feature_importance.append({
+                'factor': self._get_readable_feature_name(feature),
+                'importance': float(importance),
+                'description': description,
+                'weight_direction': 'increases' if self.model.weights[i] > 0 else 'decreases',
+                'raw_weight': float(self.model.weights[i]),
+                'normalized_importance': float(importance_percentages[i])
+            })
+        
+        # Sort by importance (descending)
+        feature_importance.sort(key=lambda x: x['importance'], reverse=True)
+        
+        # Add cumulative importance analysis
+        cumulative_importance = 0
+        for i, factor in enumerate(feature_importance):
+            cumulative_importance += factor['importance']
+            factor['cumulative_importance'] = cumulative_importance
+            factor['rank'] = i + 1
+        
+        return {
+            'features': feature_importance,
+            'top_5_features': feature_importance[:5],
+            'total_features': len(feature_importance),
+            'top_3_cumulative_impact': sum(f['importance'] for f in feature_importance[:3]),
+            'model_insight': self._generate_model_insights(feature_importance)
+        }
+    
+    def _get_readable_feature_name(self, feature_name: str) -> str:
+        """Convert technical feature names to readable names"""
+        name_mapping = {
+            'CreditScore': 'Credit Score',
+            'Age': 'Customer Age',
+            'Tenure': 'Account Tenure',
+            'Balance': 'Account Balance',
+            'NumOfProducts': 'Product Portfolio Size',
+            'HasCrCard': 'Credit Card Ownership',
+            'IsActiveMember': 'Account Activity Level',
+            'EstimatedSalary': 'Income Level',
+            'Geography_France': 'France Location',
+            'Geography_Germany': 'Germany Location', 
+            'Geography_Spain': 'Spain Location',
+            'Gender_Female': 'Female Demographics',
+            'Gender_Male': 'Male Demographics'
+        }
+        return name_mapping.get(feature_name, feature_name.replace('_', ' ').title())
+    
+    def _get_feature_description(self, feature_name: str, weight: float) -> str:
+        """Generate meaningful descriptions for features based on their impact"""
+        impact_direction = "increases" if weight > 0 else "decreases"
+        
+        descriptions = {
+            'CreditScore': f'Higher credit scores {impact_direction} churn probability - indicates creditworthiness impact',
+            'Age': f'Older customers {impact_direction} churn probability - age-related retention patterns',
+            'Tenure': f'Longer tenure {impact_direction} churn probability - relationship stability indicator',
+            'Balance': f'Higher account balance {impact_direction} churn probability - financial engagement level',
+            'NumOfProducts': f'More products {impact_direction} churn probability - portfolio diversification effect',
+            'HasCrCard': f'Having a credit card {impact_direction} churn probability - additional service adoption',
+            'IsActiveMember': f'Active membership {impact_direction} churn probability - engagement indicator',
+            'EstimatedSalary': f'Higher income {impact_direction} churn probability - affluence correlation',
+            'Geography_France': f'Being in France {impact_direction} churn probability - regional market dynamics',
+            'Geography_Germany': f'Being in Germany {impact_direction} churn probability - regional market preferences',
+            'Geography_Spain': f'Being in Spain {impact_direction} churn probability - regional competitive landscape',
+            'Gender_Female': f'Female customers {impact_direction} churn probability - gender-based behavioral patterns',
+            'Gender_Male': f'Male customers {impact_direction} churn probability - gender-based service preferences'
+        }
+        
+        return descriptions.get(feature_name, f'{feature_name} {impact_direction} churn probability')
+    
+    def _generate_model_insights(self, feature_importance: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Generate high-level insights from feature importance analysis"""
+        top_features = feature_importance[:5]
+        top_3_impact = sum(f['importance'] for f in feature_importance[:3])
+        
+        # Categorize features
+        demographic_features = [f for f in top_features if any(x in f['factor'].lower() for x in ['age', 'gender', 'location', 'france', 'germany', 'spain'])]
+        financial_features = [f for f in top_features if any(x in f['factor'].lower() for x in ['credit', 'balance', 'income', 'salary'])]
+        behavioral_features = [f for f in top_features if any(x in f['factor'].lower() for x in ['activity', 'active', 'tenure', 'product'])]
+        
+        return {
+            'primary_drivers': 'Financial' if len(financial_features) >= 2 else 'Behavioral' if len(behavioral_features) >= 2 else 'Mixed',
+            'top_3_contribution': f"{top_3_impact:.1%}",
+            'key_insight': f"The top 3 factors account for {top_3_impact:.1%} of the model's decision-making",
+            'actionable_focus': top_features[0]['factor'] if top_features else 'No clear focus',
+            'feature_categories': {
+                'demographic_count': len(demographic_features),
+                'financial_count': len(financial_features), 
+                'behavioral_count': len(behavioral_features)
+            }
+        }
 
 
 def main():
