@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react'
 import type { User } from '../types'
 import { auth } from '../api'
 import Logo from './Logo'
-import GoogleLoginButton from './GoogleLoginButton'
 
 interface LoginFormProps {
   onSuccess: (user: User) => void
@@ -61,16 +60,6 @@ export default function LoginForm({ onSuccess, onNavigateToRegister, onBackToLan
     }
   }
 
-  const handleGoogleSuccess = (user: User) => {
-    const dashboardType = user.role === 'banking_user' ? 'Customer Dashboard' : 'Employee Analytics Dashboard'
-    setSuccess(`✅ Google login successful! Welcome ${user.email}. Redirecting to your ${dashboardType}...`)
-    onSuccess(user)
-  }
-
-  const handleGoogleError = (errorMessage: string) => {
-    setError(errorMessage)
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex flex-col justify-center px-6 py-12 lg:px-8 relative overflow-hidden">
       {/* Animated background elements */}
@@ -111,24 +100,6 @@ export default function LoginForm({ onSuccess, onNavigateToRegister, onBackToLan
 
       <div className="relative z-10 mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
         <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 py-8 px-6 shadow-2xl rounded-3xl">
-          {/* Google Login Button */}
-          <div className="mb-6">
-            <GoogleLoginButton 
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-            />
-          </div>
-
-          {/* Divider */}
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-600"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-800/50 text-gray-400">Or continue with email</span>
-            </div>
-          </div>
-
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
@@ -171,32 +142,14 @@ export default function LoginForm({ onSuccess, onNavigateToRegister, onBackToLan
             </div>
 
             {error && (
-              <div className="rounded-xl bg-red-500/20 border border-red-500/30 p-4 backdrop-blur-sm animate-pulse">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-sm text-red-200">{error}</div>
-                  </div>
-                </div>
+              <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4">
+                <p className="text-red-500 text-sm">{error}</p>
               </div>
             )}
 
             {success && (
-              <div className="rounded-xl bg-green-500/20 border border-green-500/30 p-4 backdrop-blur-sm animate-pulse">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-sm text-green-200">{success}</div>
-                  </div>
-                </div>
+              <div className="bg-green-500/10 border border-green-500/50 rounded-xl p-4">
+                <p className="text-green-500 text-sm">{success}</p>
               </div>
             )}
 
@@ -207,21 +160,21 @@ export default function LoginForm({ onSuccess, onNavigateToRegister, onBackToLan
                 className="group relative w-full flex justify-center py-4 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold shadow-2xl hover:shadow-purple-500/30 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-blue-400 opacity-0 group-hover:opacity-20 transition-opacity"></div>
-                {success ? (
-                  <div className="flex items-center relative z-10">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Redirecting to Dashboard...
-                  </div>
-                ) : isLoading ? (
+                {isLoading ? (
                   <div className="flex items-center relative z-10">
                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                     Signing in...
+                  </div>
+                ) : success ? (
+                  <div className="flex items-center relative z-10">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Redirecting to Dashboard...
                   </div>
                 ) : (
                   <span className="relative z-10">Sign in</span>
