@@ -1,8 +1,8 @@
 from flask import jsonify, request, current_app
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, logout_user
 from app import db
 from app.user import bp
-from app.models import LoanRequest, User
+from app.models import LoanRequest, User, ChurnAnalysis
 from app.ai_models.loan.loan_utils import (
     validate_frontend_loan_data, 
     predict_loan_approval,
@@ -311,4 +311,44 @@ def delete_loan_request(loan_id):
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error deleting loan request {loan_id} for user {current_user.id}: {str(e)}")
-        return jsonify({'error': 'Failed to delete loan request'}), 500 
+        return jsonify({'error': 'Failed to delete loan request'}), 500
+
+@bp.route('/delete-account', methods=['DELETE'])
+@login_required
+def delete_account():
+    """
+    Delete user account and all associated data
+    This is a permanent action that cannot be undone
+    """
+    try:
+        user_id = current_user.id
+        user_email = current_user.email
+        
+        # Delete all associated loan requests
+        LoanRequest.query.filter_by(user_id=user_id).delete()
+        
+        # Delete all associated churn analyses
+        ChurnAnalysis.query.filter_by(employee_id=user_id).delete()
+        
+        # Log out the user before deleting the account
+        logout_user()
+        
+        # Delete the user account
+        user = User.query.get(user_id)
+        if user:
+            db.session.delete(user)
+            db.session.commit()
+            
+            current_app.logger.info(f"User account {user_email} (ID: {user_id}) has been successfully deleted")
+            
+            return jsonify({
+                'success': True,
+                'message': 'Account has been permanently deleted. All your data has been removed.'
+            })
+        else:
+            return jsonify({'error': 'User not found'}), 404
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting user account {current_user.id}: {str(e)}")
+        return jsonify({'error': 'Failed to delete account. Please try again.'}), 500 

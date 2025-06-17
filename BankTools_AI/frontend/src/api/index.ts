@@ -13,8 +13,15 @@ api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized access
-      window.location.href = '/';
+      // Only redirect to landing page if this is NOT a login attempt
+      // Check if the request was to the login endpoint
+      const isLoginRequest = error.config?.url?.includes('/api/auth/login');
+      const isRegisterRequest = error.config?.url?.includes('/api/auth/register');
+      
+      if (!isLoginRequest && !isRegisterRequest) {
+        // Handle unauthorized access for authenticated routes
+        window.location.href = '/';
+      }
     }
     return Promise.reject(error);
   }
@@ -42,6 +49,9 @@ export const user = {
       newPassword, 
       confirmPassword 
     }),
+
+  deleteAccount: () =>
+    api.delete(API_CONFIG.ENDPOINTS.USER.DELETE_ACCOUNT),
 
   submitLoanRequest: (loanData: Omit<LoanRequest, 'id' | 'userId' | 'status' | 'createdAt'>) =>
     api.post(API_CONFIG.ENDPOINTS.USER.LOAN_REQUEST, loanData),

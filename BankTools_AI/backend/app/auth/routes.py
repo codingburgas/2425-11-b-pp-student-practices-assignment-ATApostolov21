@@ -121,10 +121,19 @@ def login():
         })
     
     data = request.get_json()
-    user = User.query.filter_by(email=data['email']).first()
+    email = data.get('email', '').strip().lower()
+    password = data.get('password', '')
     
-    if user is None or not user.check_password(data['password']):
-        return jsonify({'error': 'Invalid email or password'}), 401
+    if not email or not password:
+        return jsonify({'error': 'Email and password are required'}), 400
+    
+    user = User.query.filter_by(email=email).first()
+    
+    if user is None:
+        return jsonify({'error': 'No account found with this email address. Please check your email or register for a new account.'}), 401
+    
+    if not user.check_password(password):
+        return jsonify({'error': 'Incorrect password. Please check your password and try again.'}), 401
     
     # Temporarily disable email verification requirement for development
     # if not user.is_verified:

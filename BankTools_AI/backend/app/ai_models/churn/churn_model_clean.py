@@ -12,11 +12,11 @@ import warnings
 from typing import Tuple, Dict, Any, List, Optional
 
 # Import modular components from shared utilities
-from ..shared.base_model import BasePredictor, LogisticRegression, ModelEvaluator, DataUtils
-from ..shared.validators import DataValidator
-from ..shared.data_cleaners import DataCleaner
-from ..shared.feature_engineering import ChurnFeatureEngineer
-from ..shared.data_quality_utils import DataQualityAssessment, EnhancedDataCleaner
+from app.ai_models.shared.base_model import BasePredictor, LogisticRegression, ModelEvaluator, DataUtils
+from app.ai_models.shared.validators import DataValidator
+from app.ai_models.shared.data_cleaners import DataCleaner
+from app.ai_models.shared.feature_engineering import ChurnFeatureEngineer
+from app.ai_models.shared.data_quality_utils import DataQualityAssessment, EnhancedDataCleaner
 
 warnings.filterwarnings('ignore')
 
@@ -415,7 +415,7 @@ class ChurnPredictor(BasePredictor):
             description = self._get_feature_description(feature, self.model.weights[i])
             
             feature_importance.append({
-                'factor': self._get_readable_feature_name(feature),
+                'name': self._get_readable_feature_name(feature),
                 'importance': float(importance),
                 'description': description,
                 'weight_direction': 'increases' if self.model.weights[i] > 0 else 'decreases',
@@ -438,7 +438,7 @@ class ChurnPredictor(BasePredictor):
             'top_5_features': feature_importance[:5],
             'total_features': len(feature_importance),
             'top_3_cumulative_impact': sum(f['importance'] for f in feature_importance[:3]),
-            'model_insight': self._generate_model_insights(feature_importance)
+            'insights': self._generate_model_insights(feature_importance)
         }
     
     def _get_readable_feature_name(self, feature_name: str) -> str:
@@ -488,15 +488,15 @@ class ChurnPredictor(BasePredictor):
         top_3_impact = sum(f['importance'] for f in feature_importance[:3])
         
         # Categorize features
-        demographic_features = [f for f in top_features if any(x in f['factor'].lower() for x in ['age', 'gender', 'location', 'france', 'germany', 'spain'])]
-        financial_features = [f for f in top_features if any(x in f['factor'].lower() for x in ['credit', 'balance', 'income', 'salary'])]
-        behavioral_features = [f for f in top_features if any(x in f['factor'].lower() for x in ['activity', 'active', 'tenure', 'product'])]
+        demographic_features = [f for f in top_features if any(x in f['name'].lower() for x in ['age', 'gender', 'location', 'france', 'germany', 'spain'])]
+        financial_features = [f for f in top_features if any(x in f['name'].lower() for x in ['credit', 'balance', 'income', 'salary'])]
+        behavioral_features = [f for f in top_features if any(x in f['name'].lower() for x in ['activity', 'active', 'tenure', 'product'])]
         
         return {
             'primary_drivers': 'Financial' if len(financial_features) >= 2 else 'Behavioral' if len(behavioral_features) >= 2 else 'Mixed',
             'top_3_contribution': f"{top_3_impact:.1%}",
             'key_insight': f"The top 3 factors account for {top_3_impact:.1%} of the model's decision-making",
-            'actionable_focus': top_features[0]['factor'] if top_features else 'No clear focus',
+            'actionable_focus': top_features[0]['name'] if top_features else 'No clear focus',
             'feature_categories': {
                 'demographic_count': len(demographic_features),
                 'financial_count': len(financial_features), 
@@ -506,45 +506,39 @@ class ChurnPredictor(BasePredictor):
 
 
 def main():
-    """Main function to train the churn prediction model"""
+    """Run churn prediction model training"""
+    print("Starting churn prediction model training...")
+    
     # Initialize predictor
     predictor = ChurnPredictor()
     
-    # Set random seed for reproducibility
-    np.random.seed(42)
+    # Set paths
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    dataset_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))), 'datasets', 'Churn_Modelling.csv')
+    model_path = os.path.join(current_dir, 'churn_model.joblib')
     
-    # Train the model
-    dataset_path = "../../datasets/Churn_Modelling.csv"
+    # Train model
     results = predictor.train(dataset_path)
     
-    # Save the model
-    os.makedirs("../models", exist_ok=True)
-    predictor.save_model("../models/churn_model.joblib")
+    # The results are already printed by the model during training
+    
+    # Save model
+    predictor.save_model(model_path)
+    print(f"\nModel saved to: {model_path}")
     
     # Plot training history
     predictor.plot_training_history()
     
-    # Test prediction with sample data
-    sample_customer = {
-        'CreditScore': 650,
-        'Geography': 'France',
-        'Gender': 'Female',
-        'Age': 35,
-        'Tenure': 5,
-        'Balance': 50000,
-        'NumOfProducts': 2,
-        'HasCrCard': 1,
-        'IsActiveMember': 1,
-        'EstimatedSalary': 75000
-    }
-    
-    prediction = predictor.predict(sample_customer)
-    print(f"\nSample Prediction:")
-    print(f"Customer data: {sample_customer}")
-    print(f"Churn probability: {prediction['churn_probability']:.3f}")
-    print(f"Risk level: {prediction['risk_level']}")
-    print(f"Recommendations: {prediction['recommendations']}")
+    # Get and print feature importance
+    importance = predictor.get_feature_importance()
+    print("\nFeature Importance:")
+    for feature in importance['features']:
+        print(f"{feature['name']}: {feature['importance']:.3f} - {feature['description']}")
+        
+    print("\nModel Insights:")
+    for insight in importance['insights']:
+        print(f"- {insight}")
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main() 

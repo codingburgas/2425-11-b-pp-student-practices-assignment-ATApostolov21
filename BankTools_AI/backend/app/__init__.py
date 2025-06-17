@@ -4,7 +4,7 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask_migrate import Migrate
 from flask_cors import CORS
-from app.config import Config
+from .config import Config
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -43,29 +43,29 @@ def create_app(config_class=Config):
          allow_headers=['Content-Type', 'Authorization'])
     
     # Register blueprints
-    from app.auth import bp as auth_bp
+    from .auth import bp as auth_bp
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     
-    from app.user import bp as user_bp
+    from .user import bp as user_bp
     app.register_blueprint(user_bp, url_prefix='/api/user')
     
-    from app.admin import bp as admin_bp
+    from .admin import bp as admin_bp
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     
     # Register AI models blueprint
-    from app.ai_models import create_blueprint
+    from .ai_models import create_blueprint
     ai_models_bp = create_blueprint()
     app.register_blueprint(ai_models_bp, url_prefix='/api')
     
     @login_manager.user_loader
     def load_user(id):
-        from app.models import User
+        from .models import User
         return User.query.get(int(id))
     
     # Load AI models after app context is available
     with app.app_context():
         try:
-            from app.ai_models.routes import load_models
+            from .ai_models.routes import load_models
             load_models()
         except Exception as e:
             print(f"Warning: Could not load AI models: {str(e)}")

@@ -17,6 +17,17 @@ export default function LoginForm({ onSuccess, onNavigateToRegister, onBackToLan
   const [success, setSuccess] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
+  // Clear error when user starts typing
+  const handleEmailChange = (value: string) => {
+    setEmail(value)
+    if (error) setError('')
+  }
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value)
+    if (error) setError('')
+  }
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
@@ -131,7 +142,7 @@ export default function LoginForm({ onSuccess, onNavigateToRegister, onBackToLan
                   autoComplete="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => handleEmailChange(e.target.value)}
                   className="block w-full rounded-xl border-0 bg-gray-900/50 py-4 px-4 text-white placeholder:text-gray-500 focus:ring-2 focus:ring-purple-500 focus:bg-gray-900/70 transition-all duration-200 backdrop-blur-sm"
                   placeholder="Enter your email"
                 />
@@ -151,7 +162,7 @@ export default function LoginForm({ onSuccess, onNavigateToRegister, onBackToLan
                   autoComplete="current-password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
                   className="block w-full rounded-xl border-0 bg-gray-900/50 py-4 px-4 text-white placeholder:text-gray-500 focus:ring-2 focus:ring-purple-500 focus:bg-gray-900/70 transition-all duration-200 backdrop-blur-sm"
                   placeholder="Enter your password"
                 />

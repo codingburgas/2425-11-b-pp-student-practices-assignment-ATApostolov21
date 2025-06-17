@@ -84,11 +84,23 @@ export default function SettingsPage({ user }: SettingsPageProps) {
   const handleDeleteAccount = async () => {
     setIsLoading(true)
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      setMessage({ type: 'success', text: 'Account deletion request submitted.' })
+      const response = await userAPI.deleteAccount()
+      
+      // Show success message briefly before redirecting
+      setMessage({ type: 'success', text: response.data.message || 'Account deleted successfully!' })
       setShowDeleteDialog(false)
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to process deletion request.' })
+      
+      // Redirect to landing page after a brief delay
+      setTimeout(() => {
+        window.location.href = '/'
+      }, 1500)
+      
+    } catch (error: any) {
+      let errorMessage = 'Failed to delete account. Please try again.'
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error
+      }
+      setMessage({ type: 'error', text: errorMessage })
     } finally {
       setIsLoading(false)
     }
